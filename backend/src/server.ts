@@ -11,6 +11,7 @@ import { getHealth, getReadiness, getLiveness } from './api/health.js';
 import { zonesRouter } from './api/zones.js';
 import { locationRouter } from './api/location.js';
 import { airspaceRouter } from './api/airspace.js';
+import { toalRouter } from './api/toal.js';
 
 /**
  * Create and configure Express application
@@ -55,6 +56,7 @@ export function createApp(): Application {
   app.use('/api/v1/zones', zonesRouter);
   app.use('/api/v1/location', locationRouter);
   app.use('/api/v1/airspace', airspaceRouter);
+  app.use('/api/v1/toal', toalRouter);
 
   // 404 handler (must be after all routes)
   app.use(notFoundHandler);

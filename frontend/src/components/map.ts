@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { apiClient } from '../services/api-client.js';
 import { geolocationService, GeolocationError } from '../services/geolocation.js';
 import { RestrictionStatusIndicator } from './RestrictionStatusIndicator.js';
+import { SearchBar } from './SearchBar.js';
 
 /**
  * DroneGo Map Component
@@ -19,10 +20,13 @@ export class DroneGoMap {
   private currentLocationMarker: L.Marker | null = null;
   private userLocationMarker: L.Marker | null = null;
   private userLocation: { lat: number; lng: number } | null = null;
+  private searchBar: SearchBar | null = null;
+  private searchResultMarker: L.Marker | null = null;
   private statusIndicator: RestrictionStatusIndicator;
   private layersEnabled = {
     zones: true,
     airspace: true,
+    toal: true,
   };
 
   constructor(private containerId: string) {
@@ -94,6 +98,7 @@ export class DroneGoMap {
     // Add map controls
     this.addLocationButton();
     this.addLayerToggles();
+    this.initializeSearchBar();
 
     console.log('Map initialized successfully');
   }
@@ -113,16 +118,22 @@ export class DroneGoMap {
     };
 
     try {
-      // Load zones and airspace in parallel
-      const [zonesData, airspaceData] = await Promise.all([
+      // Load zones, airspace, and TOAL sites in parallel
+      const [zonesData, airspaceData, toalData] = await Promise.all([
         apiClient.getZones(boundsCoords),
         apiClient.getAirspace(boundsCoords),
+        apiClient.getTOALSites(boundsCoords),
       ]);
 
       this.displayZones(zonesData);
       this.displayAirspace(airspaceData);
+      this.displayTOAL(toalData);
 
-      console.log(`Loaded ${zonesData.metadata?.result_count || 0} zones, ${airspaceData.metadata?.result_count || 0} airspace`);
+      console.log(
+        `Loaded ${zonesData.metadata?.result_count || 0} zones, ` +
+        `${airspaceData.metadata?.result_count || 0} airspace, ` +
+        `${toalData.metadata?.result_count || 0} TOAL sites`
+      );
     } catch (error) {
       console.error('Failed to load map data:', error);
     }
@@ -237,6 +248,194 @@ export class DroneGoMap {
       // Add to layer
       geoJsonLayer.addTo(this.airspaceLayer);
     });
+  }
+
+  /**
+   * Display TOAL (Take-Off And Landing) sites on the map
+   */
+  private displayTOAL(data: any): void {
+    // Clear existing TOAL markers
+    this.toalLayer.clearLayers();
+
+    if (!data.features || data.features.length === 0) {
+      return;
+    }
+
+    // Add each TOAL site to the map
+    data.features.forEach((feature: any) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      const props = feature.properties;
+
+      // Create marker with confidence badge icon
+      const icon = this.createTOALIcon(props);
+      const marker = L.marker([lat, lng], { icon });
+
+      // Add popup with site details
+      const popup = this.createTOALPopup(props);
+      marker.bindPopup(popup);
+
+      // Add to layer
+      marker.addTo(this.toalLayer);
+    });
+  }
+
+  /**
+   * Create marker icon for TOAL site based on confidence level
+   */
+  private createTOALIcon(properties: any): L.DivIcon {
+    const badge = properties.confidence_badge;
+    
+    // Color coding by confidence level
+    const colors: Record<string, string> = {
+      'verified': '#16a34a',         // Green
+      'community-reported': '#f59e0b', // Orange
+      'unverified': '#6b7280',       // Gray
+    };
+    
+    const icons: Record<string, string> = {
+      'verified': '✓',
+      'community-reported': 'i',
+      'unverified': '?',
+    };
+    
+    const level = badge?.level || 'unverified';
+    const color = colors[level] || colors['unverified'];
+    const iconText = icons[level] || icons['unverified'];
+    
+    const html = `
+      <div style="
+        position: relative;
+        width: 32px;
+        height: 32px;
+        background: ${color};
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+      ">
+        ${iconText}
+      </div>
+    `;
+    
+    return L.divIcon({
+      className: 'toal-marker',
+      html: html,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16],
+    });
+  }
+
+  /**
+   * Create popup content for a TOAL site
+   */
+  private createTOALPopup(properties: any): string {
+    const badge = properties.confidence_badge;
+    
+    // Badge colors
+    const badgeColors: Record<string, string> = {
+      'verified': '#16a34a',
+      'community-reported': '#f59e0b',
+      'unverified': '#6b7280',
+    };
+    
+    const level = badge?.level || 'unverified';
+    const badgeColor = badgeColors[level] || badgeColors['unverified'];
+    const badgeLabel = badge?.label || 'Unverified';
+    
+    // Format access type
+    const accessLabels: Record<string, string> = {
+      'public': '🌍 Public Access',
+      'private': '🔒 Private',
+      'permit-required': '📋 Permit Required',
+      'club-only': '🛡️ Club Members Only',
+    };
+    const accessText = accessLabels[properties.access_type] || properties.access_type;
+    
+    // Format facilities
+    let facilitiesHtml = '';
+    if (properties.facilities && Object.keys(properties.facilities).length > 0) {
+      const facilityIcons: Record<string, string> = {
+        'parking': '🅿️ Parking',
+        'shelter': '🏠 Shelter',
+        'toilets': '🚻 Toilets',
+        'charging': '🔌 Charging',
+      };
+      const facilityList = Object.entries(properties.facilities)
+        .filter(([_, value]) => value)
+        .map(([key]) => facilityIcons[key] || key)
+        .join(' • ');
+      
+      if (facilityList) {
+        facilitiesHtml = `
+          <tr>
+            <td colspan="2" style="padding: 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px;">
+              ${facilityList}
+            </td>
+          </tr>
+        `;
+      }
+    }
+    
+    // Format restrictions
+    let restrictionsHtml = '';
+    if (properties.restrictions) {
+      restrictionsHtml = `
+        <tr>
+          <td colspan="2" style="padding: 8px; background: #fef3c7; border-radius: 4px; font-size: 11px; color: #92400e;">
+            ⚠️ ${properties.restrictions}
+          </td>
+        </tr>
+      `;
+    }
+    
+    return `
+      <div style="min-width: 280px; font-family: system-ui, sans-serif;">
+        <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+          ${properties.site_name || 'TOAL Site'}
+        </h3>
+        <div style="background: ${badgeColor}; color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+          <span>${badge?.icon || '?'}</span>
+          <span>${badgeLabel}</span>
+        </div>
+        <table style="width: 100%; font-size: 12px;">
+          <tr>
+            <td style="padding: 4px 0; color: #666;"><strong>Access:</strong></td>
+            <td style="padding: 4px 0;">${accessText}</td>
+          </tr>
+          ${properties.surface_type ? `
+            <tr>
+              <td style="padding: 4px 0; color: #666;"><strong>Surface:</strong></td>
+              <td style="padding: 4px 0;">${properties.surface_type}</td>
+            </tr>
+          ` : ''}
+          ${properties.operating_hours ? `
+            <tr>
+              <td style="padding: 4px 0; color: #666;"><strong>Hours:</strong></td>
+              <td style="padding: 4px 0;">${properties.operating_hours}</td>
+            </tr>
+          ` : ''}
+          ${properties.contact_info ? `
+            <tr>
+              <td style="padding: 4px 0; color: #666;"><strong>Contact:</strong></td>
+              <td style="padding: 4px 0;">${properties.contact_info}</td>
+            </tr>
+          ` : ''}
+          ${facilitiesHtml}
+          ${restrictionsHtml}
+        </table>
+        <div style="margin-top: 8px; padding: 6px 8px; background: #f3f4f6; border-radius: 4px; font-size: 10px; color: #666;">
+          Source: ${properties.data_source || 'Unknown'}
+          ${properties.last_updated ? ` • Updated: ${new Date(properties.last_updated).toLocaleDateString('en-GB')}` : ''}
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -807,6 +1006,10 @@ export class DroneGoMap {
           <input type="checkbox" id="toggle-airspace" checked style="width: 16px; height: 16px; cursor: pointer;">
           <span>✈️ Airspace Classes</span>
         </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="toggle-toal" checked style="width: 16px; height: 16px; cursor: pointer;">
+          <span>🎯 TOAL Sites</span>
+        </label>
       </div>
     `;
 
@@ -832,14 +1035,110 @@ export class DroneGoMap {
       }
     };
 
+    // TOAL toggle handler
+    const toalCheckbox = panel.querySelector('#toggle-toal') as HTMLInputElement;
+    toalCheckbox.onchange = () => {
+      this.layersEnabled.toal = toalCheckbox.checked;
+      if (toalCheckbox.checked) {
+        this.map?.addLayer(this.toalLayer);
+      } else {
+        this.map?.removeLayer(this.toalLayer);
+      }
+    };
+
     const container = document.getElementById(this.containerId);
     container?.appendChild(panel);
+  }
+
+  /**
+   * Initialize search bar for address/postcode search
+   */
+  private initializeSearchBar(): void {
+    // Create search bar container in the map
+    const searchContainer = document.createElement('div');
+    searchContainer.id = 'search-bar-container';
+    searchContainer.style.cssText = `
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: 90%;
+      max-width: 500px;
+    `;
+    
+    const container = document.getElementById(this.containerId);
+    container?.appendChild(searchContainer);
+    
+    // Initialize SearchBar component
+    this.searchBar = new SearchBar('search-bar-container');
+    
+    // Set up callback for when a location is selected
+    this.searchBar.onSelect((lat, lon, displayName) => {
+      if (!this.map) return;
+      
+      // Fly to the selected location
+      this.map.flyTo([lat, lon], 16, {
+        duration: 1.5,
+      });
+      
+      // Clear previous search result marker
+      if (this.searchResultMarker) {
+        this.searchResultMarker.remove();
+      }
+      
+      // Create marker for search result
+      const icon = L.divIcon({
+        className: 'search-result-marker',
+        html: `
+          <div style="
+            width: 40px;
+            height: 40px;
+            background: #3b82f6;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            animation: pulse 2s infinite;
+          ">
+            📍
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+      });
+      
+      this.searchResultMarker = L.marker([lat, lon], { icon });
+      this.searchResultMarker.addTo(this.map);
+      this.searchResultMarker.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; min-width: 200px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+            Search Result
+          </h3>
+          <p style="margin: 0; font-size: 12px; color: #666;">
+            ${displayName}
+          </p>
+        </div>
+      `).openPopup();
+      
+      // Auto-check restriction status at this location
+      this.checkLocation(lat, lon);
+    });
   }
 
   /**
    * Clean up map resources
    */
   destroy(): void {
+    if (this.searchBar) {
+      this.searchBar.destroy();
+      this.searchBar = null;
+    }
     if (this.map) {
       this.map.remove();
       this.map = null;

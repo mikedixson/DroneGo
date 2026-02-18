@@ -164,30 +164,30 @@
 
 ### Backend Implementation for US2
 
-- [ ] T062 [P] [US2] Create TOALSite model in backend/src/models/TOALSite.ts
-- [ ] T063 [US2] Implement TOAL sites query service (bbox filtering) in backend/src/services/toal-service.ts
-- [ ] T064 [US2] Implement nearest TOAL site finder with ST_Distance in backend/src/services/toal-service.ts
-- [ ] T065 [US2] Implement geocoding service (UK address/postcode to coordinates) in backend/src/services/geocoding-service.ts
-- [ ] T066 [US2] Create GET /toal endpoint with bounds parameter in backend/src/api/toal.ts
-- [ ] T067 [US2] Create GET /toal/nearest endpoint in backend/src/api/toal.ts
-- [ ] T068 [US2] Create GET /location/search endpoint with geocoding in backend/src/api/location.ts
-- [ ] T069 [US2] Add distance calculation to search results in backend/src/services/geocoding-service.ts
-- [ ] T070 [US2] Register toal routes in backend/src/server.ts
+- [X] T062 [P] [US2] Create TOALSite model in backend/src/models/TOALSite.ts
+- [X] T063 [US2] Implement TOAL sites query service (bbox filtering) in backend/src/services/toal-service.ts
+- [X] T064 [US2] Implement nearest TOAL site finder with ST_Distance in backend/src/services/toal-service.ts
+- [X] T065 [US2] Implement geocoding service (UK address/postcode to coordinates) in backend/src/services/geocoding-service.ts
+- [X] T066 [US2] Create GET /toal endpoint with bounds parameter in backend/src/api/toal.ts
+- [X] T067 [US2] Create GET /toal/nearest endpoint in backend/src/api/toal.ts
+- [X] T068 [US2] Create GET /location/search endpoint with geocoding in backend/src/api/location.ts
+- [X] T069 [US2] Add distance calculation to search results in backend/src/services/geocoding-service.ts
+- [X] T070 [US2] Registered toal routes in backend/src/server.ts
 
 ### Frontend Implementation for US2
 
-- [ ] T071 [P] [US2] Create SearchBar component with input field in frontend/src/components/SearchBar.ts
+- [X] T071 [P] [US2] Create SearchBar component with input field in frontend/src/components/SearchBar.ts
 - [ ] T072 [P] [US2] Create TOALMarker component for launch site icons in frontend/src/components/TOALMarker.ts
 - [ ] T073 [P] [US2] Create TOALLayer component for rendering all sites in frontend/src/components/TOALLayer.ts
 - [ ] T074 [P] [US2] Create DistanceDisplay component for nearest TOAL in frontend/src/components/DistanceDisplay.ts
-- [ ] T075 [US2] Implement search API client method in frontend/src/services/api-client.ts
-- [ ] T076 [US2] Implement TOAL sites API client methods in frontend/src/services/api-client.ts
-- [ ] T077 [US2] Add search handler to navigate map to searched location in frontend/src/pages/MainMap.ts
-- [ ] T078 [US2] Query and render TOAL sites on map viewport change in frontend/src/pages/MainMap.ts
+- [X] T075 [US2] Implement search API client method in frontend/src/services/api-client.ts
+- [X] T076 [US2] Implement TOAL sites API client methods in frontend/src/services/api-client.ts
+- [X] T077 [US2] Add search handler to navigate map to searched location in frontend/src/pages/MainMap.ts
+- [X] T078 [US2] Query and render TOAL sites on map viewport change in frontend/src/pages/MainMap.ts
 - [ ] T078-A [US2] Implement TOAL filter controls by access_type (public/private/permit/club) per FR-013A in frontend/src/components/TOALFilter.ts
-- [ ] T078-B [P] [US2] Display TOAL confidence badges (verified/community-reported/unverified) in TOALMarker component per FR-013B in frontend/src/components/TOALMarker.ts
+- [X] T078-B [P] [US2] Display TOAL confidence badges (verified/community-reported/unverified) in TOALMarker component per FR-013B in frontend/src/components/TOALMarker.ts
 - [ ] T079 [US2] Display nearest TOAL distance after search in frontend/src/pages/MainMap.ts
-- [ ] T080 [US2] Add search result markers with distinctive styling in frontend/src/components/SearchBar.ts
+- [X] T080 [US2] Add search result markers with distinctive styling in frontend/src/components/SearchBar.ts
 - [ ] T081 [US2] Implement auto-complete suggestions for search (if time permits) in frontend/src/components/SearchBar.ts
 
 **Checkpoint**: User Story 2 complete - pilots can plan flights by searching locations and finding TOAL sites

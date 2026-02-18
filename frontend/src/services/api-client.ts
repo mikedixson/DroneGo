@@ -126,17 +126,36 @@ class ApiClient {
   /**
    * GET /location/search - Search for location by address/postcode
    */
-  async searchLocation(query: string): Promise<SearchResult> {
-    const params = new URLSearchParams({ q: query });
+  async searchLocation(query: string, limit: number = 5): Promise<SearchResult> {
+    const params = new URLSearchParams({ 
+      q: query,
+      limit: limit.toString()
+    });
     return this.fetch<SearchResult>(`/location/search?${params.toString()}`);
   }
 
   /**
    * GET /toal - Query TOAL sites by bounding box
    */
-  async getTOALSites(bounds: BoundsCoordinates): Promise<TOALSiteCollection> {
-    const boundsParam = `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`;
-    const params = new URLSearchParams({ bounds: boundsParam });
+  async getTOALSites(
+    bounds: BoundsCoordinates, 
+    accessTypes?: string[],
+    verified?: boolean
+  ): Promise<TOALSiteCollection> {
+    const params = new URLSearchParams({
+      minLng: bounds.minLon.toString(),
+      minLat: bounds.minLat.toString(),
+      maxLng: bounds.maxLon.toString(),
+      maxLat: bounds.maxLat.toString(),
+    });
+
+    if (accessTypes && accessTypes.length > 0) {
+      params.append('accessTypes', accessTypes.join(','));
+    }
+
+    if (verified !== undefined) {
+      params.append('verified', verified.toString());
+    }
 
     return this.fetch<TOALSiteCollection>(`/toal?${params.toString()}`);
   }
@@ -144,11 +163,21 @@ class ApiClient {
   /**
    * GET /toal/nearest - Find nearest TOAL site to coordinates
    */
-  async getNearestTOAL(latitude: number, longitude: number): Promise<any> {
+  async getNearestTOAL(
+    latitude: number, 
+    longitude: number, 
+    limit: number = 1,
+    accessTypes?: string[]
+  ): Promise<any> {
     const params = new URLSearchParams({
       lat: latitude.toString(),
-      lon: longitude.toString(),
+      lng: longitude.toString(),
+      limit: limit.toString()
     });
+
+    if (accessTypes && accessTypes.length > 0) {
+      params.append('accessTypes', accessTypes.join(','));
+    }
 
     return this.fetch(`/toal/nearest?${params.toString()}`);
   }

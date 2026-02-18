@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { LocationService } from '../services/location-service.js';
+import { GeocodingService } from '../services/geocoding-service.js';
 import { logger } from '../lib/logger.js';
 
 /**
@@ -18,6 +19,7 @@ import { logger } from '../lib/logger.js';
 
 export const locationRouter = Router();
 const locationService = new LocationService();
+const geocodingService = new GeocodingService();
 
 /**
  * GET /location/check
@@ -111,6 +113,94 @@ locationRouter.get('/check', async (req: Request, res: Response) => {
     logger.error('Location check failed', { error });
     res.status(500).json({
       error: 'Failed to check location restriction status',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+/**
+ * GET /location/search
+ * 
+ * Search for a location by address or postcode using geocoding.
+ * Returns search results with coordinates that can be used to navigate the map.
+ * 
+ * Query Parameters:
+ * - q (required): Search query (address, postcode, place name)
+ * - limit (optional): Maximum number of results (default: 5, max: 10)
+ * - countryCode (optional): Restrict to country code (default: 'gb' for UK)
+ * 
+ * Response:
+ * - 200: Array of geocoding results with coordinates
+ * - 400: Missing or invalid query
+ * - 404: No results found
+ * - 500: Server error
+ * 
+ * @example
+ * GET /location/search?q=SW1A%201AA
+ * GET /location/search?q=Hyde%20Park,%20London&limit=3
+ */
+locationRouter.get('/search', async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string;
+
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Missing search query. Required: q parameter',
+      });
+    }
+
+    // Parse optional parameters
+    let limit = 5;
+    if (req.query.limit) {
+      limit = parseInt(req.query.limit as string, 10);
+      if (isNaN(limit) || limit < 1 || limit > 10) {
+        return res.status(400).json({
+          error: 'Invalid limit. Must be between 1 and 10.',
+        });
+      }
+    }
+
+    const countryCode = (req.query.countryCode as string) || 'gb';
+
+    // Perform geocoding search
+    const results = await geocodingService.search(query, {
+      limit,
+      countryCode
+    });
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        error: 'No locations found matching search query',
+        query
+      });
+    }
+
+    // Format response with distance calculation from query center if needed
+    const response = {
+      query,
+      results: results.map((result) => ({
+        display_name: result.display_name,
+        lat: result.lat,
+        lon: result.lon,
+        type: result.type,
+        importance: result.importance,
+        boundingbox: result.boundingbox
+      })),
+      metadata: {
+        count: results.length,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    logger.info('Location search successful', {
+      query,
+      resultCount: results.length
+    });
+
+    res.json(response);
+  } catch (error) {
+    logger.error('Location search failed', { error });
+    res.status(500).json({
+      error: 'Failed to search for location',
       message: error instanceof Error ? error.message : String(error),
     });
   }

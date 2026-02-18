@@ -64,6 +64,12 @@ export interface TOALSiteProperties {
   verified: boolean;
   data_source: string;
   last_updated: string;
+  contact_info?: string | null;
+  confidence_badge?: {
+    level: 'verified' | 'community-reported' | 'unverified';
+    label: string;
+    icon: string;
+  };
 }
 
 export interface TOALSiteFeature {
@@ -116,13 +122,19 @@ export interface LocationCheckResult {
 }
 
 export interface SearchResult {
-  location: {
-    latitude: number;
-    longitude: number;
+  query: string;
+  results: Array<{
+    display_name: string;
+    lat: number;
+    lon: number;
+    type: string;
+    importance: number;
+    boundingbox?: [string, string, string, string];
+  }>;
+  metadata: {
+    count: number;
+    timestamp: string;
   };
-  address: string;
-  restriction_status: string;
-  nearest_toal_distance: number | null;
 }
 
 export interface HealthResponse {

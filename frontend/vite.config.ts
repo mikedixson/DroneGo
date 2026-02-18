@@ -92,7 +92,7 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    https: true, // Required for geolocation API (NFR-004)
+    // Note: geolocation API works on localhost even without HTTPS
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
