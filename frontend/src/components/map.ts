@@ -192,9 +192,38 @@ export class DroneGoMap {
         style: style,
       });
 
-      // Add popup with zone details
-      const popup = this.createZonePopup(feature.properties);
-      geoJsonLayer.bindPopup(popup);
+      // Add click handler to show both zone AND location check info
+      geoJsonLayer.on('click', async (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e); // Prevent map click
+        
+        try {
+          // Fetch location check data
+          const locationResult = await apiClient.checkLocation(e.latlng.lat, e.latlng.lng);
+          
+          // Create combined popup with zone AND flight permission info
+          const popup = this.createCombinedZonePopup(
+            feature.properties, 
+            locationResult,
+            e.latlng.lat,
+            e.latlng.lng
+          );
+          
+          // Show popup at click location
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popup)
+            .openOn(this.map!);
+            
+        } catch (error) {
+          console.error('Failed to check location:', error);
+          // Fallback to just zone info
+          const popup = this.createZonePopup(feature.properties);
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popup)
+            .openOn(this.map!);
+        }
+      });
 
       // Add to layer
       geoJsonLayer.addTo(this.zonesLayer);
@@ -241,9 +270,38 @@ export class DroneGoMap {
         },
       });
 
-      // Add popup with airspace details
-      const popup = this.createAirspacePopup(feature.properties);
-      geoJsonLayer.bindPopup(popup);
+      // Add click handler to show both airspace AND location check info
+      geoJsonLayer.on('click', async (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e); // Prevent map click
+        
+        try {
+          // Fetch location check data
+          const locationResult = await apiClient.checkLocation(e.latlng.lat, e.latlng.lng);
+          
+          // Create combined popup with airspace AND flight permission info
+          const popup = this.createCombinedAirspacePopup(
+            feature.properties, 
+            locationResult,
+            e.latlng.lat,
+            e.latlng.lng
+          );
+          
+          // Show popup at click location
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popup)
+            .openOn(this.map!);
+            
+        } catch (error) {
+          console.error('Failed to check location:', error);
+          // Fallback to just airspace info
+          const popup = this.createAirspacePopup(feature.properties);
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(popup)
+            .openOn(this.map!);
+        }
+      });
 
       // Add to layer
       geoJsonLayer.addTo(this.airspaceLayer);
@@ -270,9 +328,25 @@ export class DroneGoMap {
       const icon = this.createTOALIcon(props);
       const marker = L.marker([lat, lng], { icon });
 
-      // Add popup with site details
-      const popup = this.createTOALPopup(props);
-      marker.bindPopup(popup);
+      // Add click handler to show both TOAL AND location check info
+      marker.on('click', async (e: L.LeafletMouseEvent) => {
+        try {
+          // Fetch location check data
+          const locationResult = await apiClient.checkLocation(lat, lng);
+          
+          // Create combined popup with TOAL AND flight permission info
+          const popup = this.createCombinedTOALPopup(props, locationResult, lat, lng);
+          
+          // Show popup
+          marker.bindPopup(popup, { maxWidth: 350 }).openPopup();
+            
+        } catch (error) {
+          console.error('Failed to check location:', error);
+          // Fallback to just TOAL info
+          const popup = this.createTOALPopup(props);
+          marker.bindPopup(popup).openPopup();
+        }
+      });
 
       // Add to layer
       marker.addTo(this.toalLayer);
@@ -439,6 +513,133 @@ export class DroneGoMap {
   }
 
   /**
+   * Create combined popup with TOAL AND location check info
+   */
+  private createCombinedTOALPopup(
+    toalProps: any, 
+    locationResult: any, 
+    lat: number, 
+    lng: number
+  ): string {
+    const badge = toalProps.confidence_badge;
+    
+    // Badge colors
+    const badgeColors: Record<string, string> = {
+      'verified': '#16a34a',
+      'community-reported': '#f59e0b',
+      'unverified': '#6b7280',
+    };
+    
+    const level = badge?.level || 'unverified';
+    const badgeColor = badgeColors[level] || badgeColors['unverified'];
+    const badgeLabel = badge?.label || 'Unverified';
+
+    // Flight permission status
+    const statusColor = locationResult.can_fly ? '#16a34a' : '#dc2626';
+    const statusIcon = locationResult.can_fly ? '✓' : '✗';
+    const statusText = locationResult.can_fly ? 'YOU CAN FLY HERE' : 'NO FLIGHT PERMITTED';
+    
+    // Format access type
+    const accessLabels: Record<string, string> = {
+      'public': '🌍 Public Access',
+      'private': '🔒 Private',
+      'permit-required': '📋 Permit Required',
+      'club-only': '🛡️ Club Members Only',
+    };
+    const accessText = accessLabels[toalProps.access_type] || toalProps.access_type;
+    
+    // Format facilities
+    let facilitiesHtml = '';
+    if (toalProps.facilities && Object.keys(toalProps.facilities).length > 0) {
+      const facilityIcons: Record<string, string> = {
+        'parking': '🅿️ Parking',
+        'shelter': '🏠 Shelter',
+        'toilets': '🚻 Toilets',
+        'charging': '🔌 Charging',
+      };
+      const facilityList = Object.entries(toalProps.facilities)
+        .filter(([_, value]) => value)
+        .map(([key]) => facilityIcons[key] || key)
+        .join(' • ');
+      
+      if (facilityList) {
+        facilitiesHtml = `
+          <div style="padding: 6px; background: #f9fafb; border-radius: 3px; font-size: 11px; margin-top: 6px;">
+            ${facilityList}
+          </div>
+        `;
+      }
+    }
+
+    // Restriction zones in this area
+    let zonesHtml = '';
+    if (locationResult.zones && locationResult.zones.length > 0) {
+      zonesHtml = `
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+          <strong style="color: #666; font-size: 11px;">RESTRICTION ZONES (${locationResult.zones.length}):</strong>
+          <ul style="margin: 4px 0; padding-left: 20px; font-size: 11px;">
+            ${locationResult.zones.map((zone: any) => `
+              <li style="margin: 2px 0;">${zone.restriction_name}</li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+    
+    return `
+      <div style="min-width: 300px; font-family: system-ui, sans-serif;">
+        <!-- Flight Permission Status -->
+        <div style="background: ${statusColor}; color: white; padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; font-weight: 600; font-size: 13px; text-align: center;">
+          ${statusIcon} ${statusText}
+        </div>
+
+        <!-- TOAL Site Details -->
+        <div style="background: #f9fafb; padding: 12px; border-radius: 4px; margin-bottom: 8px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #374151;">
+            🎯 ${toalProps.site_name || 'TOAL Site'}
+          </h3>
+          <div style="background: ${badgeColor}; color: white; padding: 4px 8px; border-radius: 3px; margin-bottom: 8px; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>${badge?.icon || '?'}</span>
+            <span>${badgeLabel}</span>
+          </div>
+          <table style="width: 100%; font-size: 11px;">
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Access:</strong></td>
+              <td style="padding: 3px 0;">${accessText}</td>
+            </tr>
+            ${toalProps.surface_type ? `
+              <tr>
+                <td style="padding: 3px 0; color: #666;"><strong>Surface:</strong></td>
+                <td style="padding: 3px 0;">${toalProps.surface_type}</td>
+              </tr>
+            ` : ''}
+            ${toalProps.operating_hours ? `
+              <tr>
+                <td style="padding: 3px 0; color: #666;"><strong>Hours:</strong></td>
+                <td style="padding: 3px 0;">${toalProps.operating_hours}</td>
+              </tr>
+            ` : ''}
+          </table>
+          ${facilitiesHtml}
+          ${toalProps.restrictions ? `
+            <div style="padding: 6px; background: #fef3c7; border-radius: 3px; font-size: 10px; color: #92400e; margin-top: 6px;">
+              ⚠️ ${toalProps.restrictions}
+            </div>
+          ` : ''}
+        </div>
+
+        ${zonesHtml}
+
+        <!-- Source Info -->
+        <div style="font-size: 10px; color: #9ca3af; text-align: center; margin-top: 8px;">
+          Source: ${toalProps.data_source || 'Unknown'}
+          ${toalProps.last_updated ? ` • ${new Date(toalProps.last_updated).toLocaleDateString('en-GB')}` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * Create popup content for a restriction zone
    */
   private createZonePopup(properties: any): string {
@@ -524,6 +725,129 @@ export class DroneGoMap {
             </tr>
           ` : ''}
         </table>
+      </div>
+    `;
+  }
+
+  /**
+   * Create combined popup with zone AND location check info
+   */
+  private createCombinedZonePopup(
+    zoneProps: any, 
+    locationResult: any, 
+    lat: number, 
+    lng: number
+  ): string {
+    const canFly = !['no-fly', 'airport-frz'].includes(zoneProps.zone_type);
+    const authRequired = zoneProps.authorization_possible;
+    const isTemporary = zoneProps.zone_type === 'temporary-restriction';
+
+    // Determine overall status color (prioritize zone status)
+    let statusColor = '';
+    let statusText = '';
+    
+    if (!canFly) {
+      statusText = '🚫 NO FLY ZONE';
+      statusColor = '#dc2626';
+    } else if (authRequired) {
+      statusText = '⚠️ AUTHORIZATION REQUIRED';
+      statusColor = '#f59e0b';
+    } else if (locationResult.can_fly) {
+      statusText = '✓ YOU CAN FLY HERE';
+      statusColor = '#16a34a';
+    } else {
+      statusText = '✗ NO FLIGHT PERMITTED';
+      statusColor = '#dc2626';
+    }
+
+    // Format dates for temporary restrictions (NOTAM)
+    let effectiveDatesHtml = '';
+    if (isTemporary && zoneProps.effective_start && zoneProps.effective_end) {
+      const startDate = new Date(zoneProps.effective_start).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const endDate = new Date(zoneProps.effective_end).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      effectiveDatesHtml = `
+        <div style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-top: 8px;">
+          <div style="font-size: 11px; font-weight: 600; color: #856404; margin-bottom: 4px;">
+            ⏱️ TEMPORARY RESTRICTION
+          </div>
+          <div style="font-size: 11px; color: #856404;">
+            <strong>Effective:</strong> ${startDate}<br>
+            <strong>Expires:</strong> ${endDate}
+          </div>
+        </div>
+      `;
+    }
+
+    // Additional zones in the area
+    let additionalZonesHtml = '';
+    if (locationResult.zones && locationResult.zones.length > 1) {
+      const otherZones = locationResult.zones.filter((z: any) => z.restriction_name !== zoneProps.restriction_name);
+      if (otherZones.length > 0) {
+        additionalZonesHtml = `
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+            <strong style="color: #666; font-size: 11px;">OTHER ZONES HERE (${otherZones.length}):</strong>
+            <ul style="margin: 4px 0; padding-left: 20px; font-size: 11px;">
+              ${otherZones.map((zone: any) => `
+                <li style="margin: 2px 0;">${zone.restriction_name}</li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+      }
+    }
+
+    return `
+      <div style="min-width: 280px; font-family: system-ui, sans-serif;">
+        <!-- Flight Permission Status -->
+        <div style="background: ${statusColor}; color: white; padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; font-weight: 600; font-size: 13px; text-align: center;">
+          ${statusText}
+        </div>
+
+        <!-- Zone Details -->
+        <div style="background: #f9fafb; padding: 12px; border-radius: 4px; margin-bottom: 8px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #374151;">
+            ${zoneProps.restriction_name}
+          </h3>
+          <table style="width: 100%; font-size: 11px;">
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Type:</strong></td>
+              <td style="padding: 3px 0;">${this.formatZoneType(zoneProps.zone_type)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Authority:</strong></td>
+              <td style="padding: 3px 0;">${zoneProps.authority_source}</td>
+            </tr>
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Altitude:</strong></td>
+              <td style="padding: 3px 0;">${zoneProps.altitude_floor}ft - ${zoneProps.altitude_ceiling}ft</td>
+            </tr>
+          </table>
+          ${effectiveDatesHtml}
+          ${zoneProps.description ? `
+            <div style="margin-top: 8px; padding: 6px; background: white; border-radius: 3px; font-size: 10px; color: #555; line-height: 1.4;">
+              ${zoneProps.description}
+            </div>
+          ` : ''}
+        </div>
+
+        ${additionalZonesHtml}
+
+        <!-- Coordinates -->
+        <div style="font-size: 10px; color: #9ca3af; text-align: center; margin-top: 8px;">
+          ${lat.toFixed(5)}°, ${lng.toFixed(5)}°
+        </div>
       </div>
     `;
   }
@@ -711,6 +1035,91 @@ export class DroneGoMap {
       'G': 'IFR/VFR. No ATC clearance required. Flight information service available.',
     };
     return descriptions[icaoClass] || 'See local regulations.';
+  }
+
+  /**
+   * Create combined popup with airspace AND location check info
+   */
+  private createCombinedAirspacePopup(
+    airspaceProps: any, 
+    locationResult: any, 
+    lat: number, 
+    lng: number
+  ): string {
+    const icaoClass = airspaceProps.class_designation;
+    const classColors: Record<string, string> = {
+      'A': '#9333ea',
+      'B': '#7c3aed',
+      'C': '#6366f1',
+      'D': '#3b82f6',
+      'E': '#06b6d4',
+      'F': '#10b981',
+      'G': '#84cc16',
+    };
+    const color = classColors[icaoClass] || '#94a3b8';
+
+    // Flight permission status
+    const statusColor = locationResult.can_fly ? '#16a34a' : '#dc2626';
+    const statusIcon = locationResult.can_fly ? '✓' : '✗';
+    const statusText = locationResult.can_fly ? 'YOU CAN FLY HERE' : 'NO FLIGHT PERMITTED';
+
+    // Zones list
+    let zonesHtml = '';
+    if (locationResult.zones && locationResult.zones.length > 0) {
+      zonesHtml = `
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+          <strong style="color: #666; font-size: 11px;">RESTRICTION ZONES (${locationResult.zones.length}):</strong>
+          <ul style="margin: 4px 0; padding-left: 20px; font-size: 11px;">
+            ${locationResult.zones.map((zone: any) => `
+              <li style="margin: 2px 0;">${zone.restriction_name}</li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="min-width: 280px; font-family: system-ui, sans-serif;">
+        <!-- Flight Permission Status -->
+        <div style="background: ${statusColor}; color: white; padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; font-weight: 600; font-size: 13px; text-align: center;">
+          ${statusIcon} ${statusText}
+        </div>
+
+        <!-- Airspace Info -->
+        <div style="background: #f9fafb; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #374151;">
+            ${airspaceProps.airspace_name || 'Airspace'}
+          </h3>
+          <div style="background: ${color}; color: white; padding: 4px 8px; border-radius: 3px; margin-bottom: 8px; font-weight: 600; font-size: 11px; display: inline-block;">
+            ✈️ Class ${icaoClass} Airspace
+          </div>
+          <table style="width: 100%; font-size: 11px;">
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Authority:</strong></td>
+              <td style="padding: 3px 0;">${airspaceProps.controlling_authority || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Floor:</strong></td>
+              <td style="padding: 3px 0;">${airspaceProps.altitude_floor || 0}ft</td>
+            </tr>
+            <tr>
+              <td style="padding: 3px 0; color: #666;"><strong>Ceiling:</strong></td>
+              <td style="padding: 3px 0;">${airspaceProps.altitude_ceiling || 'Unlimited'}ft</td>
+            </tr>
+          </table>
+          <div style="margin-top: 6px; padding: 6px; background: white; border-radius: 3px; font-size: 10px; color: #555;">
+            ℹ️ ${this.getAirspaceClassDescription(icaoClass)}
+          </div>
+        </div>
+
+        ${zonesHtml}
+
+        <!-- Coordinates -->
+        <div style="font-size: 10px; color: #9ca3af; text-align: center; margin-top: 8px;">
+          ${lat.toFixed(5)}°, ${lng.toFixed(5)}°
+        </div>
+      </div>
+    `;
   }
 
   /**
