@@ -7,7 +7,7 @@
 
 ## Summary
 
-Build a Progressive Web App (PWA) for UK drone pilots to check flying restrictions and TOAL sites with real-time location checking, offline capability, and integration with official CAA/NATS airspace data. The MVP enables pilots to answer "Can I fly here?" within 5 seconds using interactive maps with PostGIS-powered geospatial queries.
+Build a Progressive Web App (PWA) for UK drone pilots to check flying restrictions and TOAL sites with real-time location checking, offline capability, and integration with official NATS airspace data. The MVP enables pilots to answer "Can I fly here?" within 5 seconds using interactive maps with PostGIS-powered geospatial queries.
 
 ## Technical Context
 
@@ -51,7 +51,7 @@ Build a Progressive Web App (PWA) for UK drone pilots to check flying restrictio
 |-----------|-------------|--------|-------|
 | **I. Safety-First** | 100% test coverage for geospatial/location services (safety-critical) | ✅ COMPLIANT | Geospatial queries determine flight legality - marked for 100% coverage (T039-TEST through T045-TEST) |
 | **I. Safety-First** | Fail-safe for unavailable/stale data | ✅ COMPLIANT | Stale data >48h shows warnings with "Verify independently" disclaimer (FR-019, FR-019A) |
-| **I. Safety-First** | No compromise on aviation regulations | ✅ COMPLIANT | CAA/NATS integration specified, CAP722 guidance provided, feet AMSL standard |
+| **I. Safety-First** | No compromise on aviation regulations | ✅ COMPLIANT | NATS data integration specified, CAA CAP722 guidance provided, feet AMSL standard |
 | **II. Modular Architecture** | Standalone modules with clear boundaries | ✅ COMPLIANT | Backend (models/services/api) and Frontend (components/services) independently testable |
 | **II. Modular Architecture** | Well-defined interfaces/contracts | ✅ COMPLIANT | REST API contracts, TypeScript interfaces, database schema documented |
 | **III. TDD** | Tests written before implementation | ✅ COMPLIANT | TDD workflow enforced via T###-TEST tasks before T### implementation tasks |
@@ -63,7 +63,7 @@ Build a Progressive Web App (PWA) for UK drone pilots to check flying restrictio
 | **V. Security & Compliance** | Authentication for control interfaces | ⏸️ DEFERRED | No admin control interface in MVP; user-facing is read-only map |
 | **V. Security & Compliance** | HTTPS/TLS encryption | ✅ COMPLIANT | Geolocation API requires HTTPS, NFR-004 mandates HTTPS for location checks |
 | **V. Security & Compliance** | Privacy regulations (GDPR) | ✅ COMPLIANT | No location storage (NFR-001 through NFR-003), data minimization (NFR-005) |
-| **V. Security & Compliance** | Aviation authority compliance | ✅ COMPLIANT | CAA/NATS data integration, CAP722 authorization guidance, UK airspace focus |
+| **V. Security & Compliance** | Aviation authority compliance | ✅ COMPLIANT | NATS data integration (official UK airspace source), CAA CAP722 authorization guidance, UK airspace focus |
 
 **Overall Assessment**: ✅ **APPROVED** - All constitutional requirements met or appropriately deferred. One gate pending user approval (Section III TDD requirement).
 

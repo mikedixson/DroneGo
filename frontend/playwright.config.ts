@@ -8,7 +8,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'https://localhost:5174',
+    ignoreHTTPSErrors: true, // Accept self-signed certificates
     trace: 'on-first-retry',
   },
 
@@ -37,7 +38,8 @@ export default defineConfig({
 
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    url: 'https://localhost:5174',
+    ignoreHTTPSErrors: true,
+    reuseExistingServer: true, // Use existing dev server
   },
 });

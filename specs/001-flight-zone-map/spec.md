@@ -138,7 +138,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 **Data Quality & Updates:**
 
-- **FR-014**: System MUST integrate with Civil Aviation Authority (CAA) official airspace data
+- **FR-014**: System MUST integrate with NATS (National Air Traffic Services) official airspace data from digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 - **FR-015**: System MUST display the data source authority and last update timestamp for all restriction zones
 - **FR-016**: System MUST update restriction data at least once daily to maintain accuracy
 - **FR-017**: System MUST include temporary flight restrictions (NOTAMs) with effective date/time ranges
@@ -193,7 +193,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 - **Location**: Represents either the user's current position or a searched location. Includes coordinates (latitude/longitude), determined restriction status (permitted/prohibited/authorization required), nearest TOAL site reference with distance, and applicable restrictions at that point.
 
-- **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., UK CAA, NATS), data type provided, last update timestamp, update frequency, and reliability/confidence level.
+- **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., NATS for airspace data, CAA for regulatory guidance), data type provided, last update timestamp, update frequency, and reliability/confidence level.
 
 - **Temporary Restriction (NOTAM)**: Represents time-limited flying restrictions. Includes NOTAM identifier, issuing authority, affected area (polygon or radius), effective start date/time, expiration date/time, restriction reason, and altitude limits.
 
@@ -227,7 +227,7 @@ The following assumptions were made to create this specification with reasonable
 
 - **Geographic Coverage**: Initial release focuses on United Kingdom airspace. Can be expanded to other countries in future iterations based on demand.
 
-- **Data Sources**: Primary data sources are UK Civil Aviation Authority (CAA) and NATS (National Air Traffic Services). Additional data sources can be integrated as needed.
+- **Data Sources**: Primary data source is NATS (National Air Traffic Services) digital datasets. CAA provides regulatory guidance (CAP722) but does not provide machine-readable airspace data. Additional data sources can be integrated as needed.
 
 - **TOAL Sites Data**: TOAL sites are sourced from community submissions with manual verification. Each site includes a confidence rating (verified, community-reported, unverified). No official UK TOAL registry currently exists; if official sources become available (e.g., CAA schemes, local authority registers), they will be integrated as authoritative sources.
 

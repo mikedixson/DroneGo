@@ -88,8 +88,8 @@ const isRestricted = restrictionZones.some(zone =>
 
 **Legal Authority & Compliance:**
 - CAA is legally designated UK airspace authority under Air Navigation Order 2016
-- NATS provides official UK AIP (Aeronautical Information Publication)
-- Primary sources satisfy FR-014 (CAA integration) and FR-018 (confidence indicators)
+- NATS provides official UK AIP (Aeronautical Information Publication) and digital datasets
+- Primary sources satisfy FR-014 (NATS data integration) and FR-018 (confidence indicators)
 - Compliance with UK Regulation (EU) 2019/947 for UAS operations
 
 **Data Completeness:**
@@ -126,9 +126,9 @@ const isRestricted = restrictionZones.some(zone =>
 
 **Phase 1 (MVP - Week 1-3):**
 ```
-1. CAA Geographic Zones
-   - Download: https://airspace.caa.co.uk/ (GeoJSON)
-   - Format: GeoJSON FeatureCollection
+1. NATS Digital Datasets (UAS Geographic Zones)
+   - Download: https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/
+   - Format: GeoJSON or KML FeatureCollection
    - Storage: PostgreSQL + PostGIS
    - Update: Daily automated download (cron job)
 
@@ -151,7 +151,7 @@ const isRestricted = restrictionZones.some(zone =>
 - Local authority drone bylaws (manual research per council)
 
 **Action Items (Pre-Implementation):**
-1. ✅ Identify exact CAA GeoJSON download URLs
+1. ✅ Identify NATS digital dataset download source (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 2. 📋 Contact NATS AIS (ais.nats@nats.co.uk) to discuss AIXM/NOTAM API licensing
 3. 📋 Document OGL attribution requirements in quickstart.md
 4. 📋 Design PostGIS schema for airspace polygons with altitude attributes
@@ -448,7 +448,7 @@ frontend/tests/
 ┌─────────────────────────────────────────────────────────────┐
 │ DATA SOURCES                                                │
 ├─────────────────────────────────────────────────────────────┤
-│ CAA API (GeoJSON) → Daily download (cron)                  │
+│ NATS Digital Datasets → Daily download (cron)              │
 │ NATS eAIP → Manual extraction → GeoJSON (Phase 1)          │
 │ NOTAM Service → Daily scrape/manual (Phase 1)              │
 └────────────────┬────────────────────────────────────────────┘
@@ -458,7 +458,7 @@ frontend/tests/
 │ BACKEND (Node.js + Express)                                │
 ├─────────────────────────────────────────────────────────────┤
 │ Data Ingestion Pipeline:                                    │
-│  - Download CAA GeoJSON                                     │
+│  - Download NATS Digital Datasets (GeoJSON/KML)            │
 │  - Validate with geojson-validation                         │
 │  - Transform to database schema                             │
 │  - Insert into PostgreSQL + PostGIS                         │
@@ -521,7 +521,7 @@ frontend/tests/
 ### Immediate (Before Design Phase)
 1. ✅ **COMPLETE**: Technology stack decisions documented
 2. 📋 **TODO**: Contact NATS AIS for AIXM/NOTAM licensing discussion
-3. 📋 **TODO**: Identify exact CAA GeoJSON download URLs
+3. ✅ **COMPLETE**: Identify NATS digital dataset source (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 4. 📋 **TODO**: Set up development environment (Node 20, PostgreSQL 15, PostGIS 3.x)
 5. 📋 **TODO**: Create GitHub repository with initial README
 

@@ -115,8 +115,7 @@ DB_USER=dronego
 DB_PASSWORD=dronego_dev_password
 JWT_SECRET=dev-secret-change-in-production
 JWT_EXPIRATION=24h
-CAA_DATA_URL=https://airspace.caa.co.uk/api/zones
-NATS_DATA_URL=https://www.nats.aero/api/airspace
+NATS_DATA_URL=https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/
 NOTAM_DATA_URL=https://www.notams.faa.gov/api
 DATA_SYNC_INTERVAL_HOURS=24
 LOG_LEVEL=debug
@@ -369,17 +368,17 @@ npm run db:seed:toal
 
 ## Loading Initial Airspace Data
 
-### Manual CAA Data Load (Development)
+### Manual NATS Data Load (Development)
 
-1. **Download CAA Geographic Zones GeoJSON**:
-   - Visit https://airspace.caa.co.uk/
-   - Download latest UAS Geographic Zones (GeoJSON format)
-   - Save to `backend/data/caa-zones.geojson`
+1. **Download NATS Digital Datasets**:
+   - Visit https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/
+   - Download latest UK UAS Geographic Zones (GeoJSON or KML format)
+   - Save to `backend/data/nats-zones.geojson`
 
 2. **Import into Database**:
    ```bash
    cd backend
-   npm run data:import -- --source caa --file data/caa-zones.geojson
+   npm run data:import -- --source nats --file data/nats-zones.geojson
    ```
 
 3. **Verify Import**:
@@ -391,11 +390,11 @@ npm run db:seed:toal
 ### Automated Data Sync (Production Approach)
 
 ```bash
-# Configure CAA API endpoint in backend/.env
-CAA_DATA_URL=https://airspace.caa.co.uk/api/zones
+# Configure NATS digital dataset download in backend/.env
+NATS_DATA_URL=https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/
 
 # Run data sync
-npm run data:sync -- --source caa
+npm run data:sync -- --source nats
 
 # Schedule daily sync (cron job or scheduled task)
 # Add to crontab (Linux/Mac): 
@@ -603,7 +602,8 @@ npm run lint             # Check code quality
 - [API Contract](contracts/api-spec.yaml)
 
 ### External Resources
-- **UK CAA Airspace**: https://airspace.caa.co.uk/
+- **NATS Digital Datasets**: https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/ (Primary data source)
+- **UK CAA Drone Zone Map**: https://airspace.caa.co.uk/ (Web reference/visualization tool)
 - **NATS AIS**: https://www.aurora.nats.co.uk/htmlAIP/
 - **Leaflet Docs**: https://leafletjs.com/reference.html
 - **PostGIS Manual**: https://postgis.net/documentation/
@@ -612,8 +612,9 @@ npm run lint             # Check code quality
 - **Playwright Docs**: https://playwright.dev/
 
 ### Data Sources & Licenses
-- **CAA Data**: Open Government License v3.0
+- **NATS Digital Datasets**: Open Government License v3.0
   - Attribution: "Contains public sector information licensed under the OGL v3.0"
+  - Source: https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/
 - **NATS AIS**: Crown Copyright (contact for commercial redistribution terms)
 - **OpenStreetMap Tiles**: Open Database License (ODbL)
 

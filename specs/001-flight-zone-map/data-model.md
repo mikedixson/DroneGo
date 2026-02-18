@@ -689,13 +689,13 @@ ORDER BY last_sync_timestamp ASC;
 ## Data Migration Strategy
 
 ### Initial Data Load
-1. **Phase 1**: Load CAA Geographic Zones (GeoJSON → PostGIS)
+1. **Phase 1**: Load NATS Digital Datasets (GeoJSON/KML → PostGIS)
 2. **Phase 2**: Load NATS eAIP airspace structure (manual extraction → conversion)
-3. **Phase 3**: Populate data_sources table with CAA, NATS, NOTAM entries
+3. **Phase 3**: Populate data_sources table with NATS, NOTAM entries
 4. **Phase 4**: Initial NOTAM load (manual review → database entry)
 
 ### Ongoing Updates
-- **Daily**: Automated CAA GeoJSON download and diff-based updates
+- **Daily**: Automated NATS digital dataset download and diff-based updates (from https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 - **28-day AIRAC**: Manual NATS eAIP review and updates (until automated)
 - **Daily**: NOTAM review and entry (manual until API secured)
 - **Hourly**: Automated NOTAM status updates (pending → active → expired)
@@ -712,7 +712,7 @@ ORDER BY last_sync_timestamp ASC;
 ### Caching Strategy (Backend)
 - **Redis cache**: Recent location queries (<5 min TTL)
 - **Cache key**: `location:${lat}_${lon}` → restriction_status + applicable_zones
-- **Cache invalidation**: On data updates (daily CAA sync, NOTAM status changes)
+- **Cache invalidation**: On data updates (daily NATS dataset sync, NOTAM status changes)
 
 ### Data Volume Estimates
 - **Restriction zones**: ~1,000-2,000 permanent zones (UK coverage)
