@@ -83,8 +83,9 @@ describe('ApiClient', () => {
 
       await apiClient.getZones(bounds, ['no-fly', 'controlled']);
 
-      const callUrl = fetchMock.mock.calls[0][0];
-      expect(callUrl).toContain('zoneTypes=no-fly,controlled');
+      const callUrl = fetchMock.mock.calls[0][0] as string;
+      // URL encodes commas as %2C
+      expect(callUrl).toMatch(/zoneTypes=(no-fly,controlled|no-fly%2Ccontrolled)/);
     });
 
     it('should parse GeoJSON FeatureCollection response', async () => {
@@ -227,8 +228,9 @@ describe('ApiClient', () => {
 
       await apiClient.getAirspace(bounds, ['D', 'E']);
 
-      const callUrl = fetchMock.mock.calls[0][0];
-      expect(callUrl).toContain('classes=D,E');
+      const callUrl = fetchMock.mock.calls[0][0] as string;
+      // URL encodes commas as %2C
+      expect(callUrl).toMatch(/classes=(D,E|D%2CE)/);
     });
   });
 

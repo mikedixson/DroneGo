@@ -92,6 +92,7 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    https: true, // Required for geolocation API (NFR-004)
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

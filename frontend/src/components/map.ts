@@ -142,6 +142,7 @@ export class DroneGoMap {
     // Add each zone to the map
     data.features.forEach((feature: any) => {
       const zoneType = feature.properties.zone_type;
+      const isTemporary = zoneType === 'temporary-restriction';
 
       // Color coding by zone type
       const colors: Record<string, string> = {
@@ -155,15 +156,29 @@ export class DroneGoMap {
 
       const color = colors[zoneType] || '#6b7280'; // Gray default
 
+      // Create style object
+      const style: any = {
+        color: color,
+        fillColor: color,
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.3,
+      };
+
+      // Add visual distinction for temporary restrictions (FR-017: NOTAMs)
+      // - Dashed border pattern
+      // - Pulsing glow animation (via CSS class)
+      // - Higher fill opacity
+      if (isTemporary) {
+        style.className = 'temporary-restriction-zone';
+        style.fillOpacity = 0.5; // More visible fill
+        style.dashArray = '10, 5'; // Dashed border for visual distinction
+        style.weight = 3; // Thicker border for emphasis
+      }
+
       // Create GeoJSON layer
       const geoJsonLayer = L.geoJSON(feature, {
-        style: {
-          color: color,
-          fillColor: color,
-          weight: 2,
-          opacity: 0.8,
-          fillOpacity: 0.3,
-        },
+        style: style,
       });
 
       // Add popup with zone details
@@ -230,6 +245,7 @@ export class DroneGoMap {
   private createZonePopup(properties: any): string {
     const canFly = !['no-fly', 'airport-frz'].includes(properties.zone_type);
     const authRequired = properties.authorization_possible;
+    const isTemporary = properties.zone_type === 'temporary-restriction';
 
     let statusText = '';
     let statusColor = '';
@@ -245,6 +261,38 @@ export class DroneGoMap {
       statusColor = '#16a34a';
     }
 
+    // Format dates for temporary restrictions (NOTAM)
+    let effectiveDatesHtml = '';
+    if (isTemporary && properties.effective_start && properties.effective_end) {
+      const startDate = new Date(properties.effective_start).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const endDate = new Date(properties.effective_end).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      effectiveDatesHtml = `
+        <tr style="background: #fff3cd;">
+          <td colspan="2" style="padding: 8px; border-radius: 4px;">
+            <div style="font-size: 11px; font-weight: 600; color: #856404; margin-bottom: 4px;">
+              ⏱️ TEMPORARY RESTRICTION
+            </div>
+            <div style="font-size: 11px; color: #856404;">
+              <strong>Effective:</strong> ${startDate}<br>
+              <strong>Expires:</strong> ${endDate}
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
     return `
       <div style="min-width: 250px; font-family: system-ui, sans-serif;">
         <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
@@ -254,6 +302,7 @@ export class DroneGoMap {
           ${statusText}
         </div>
         <table style="width: 100%; font-size: 12px;">
+          ${effectiveDatesHtml}
           <tr>
             <td style="padding: 4px 0; color: #666;"><strong>Type:</strong></td>
             <td style="padding: 4px 0;">${this.formatZoneType(properties.zone_type)}</td>

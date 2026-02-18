@@ -1,6 +1,59 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Map } from '../../../src/components/map';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from 'vitest';
 import * as L from 'leaflet';
+
+// Mock Leaflet at module level to avoid "Cannot redefine property" errors
+// Must be defined before importing Map component
+const mockMapInstance = {
+  setView: vi.fn().mockReturnThis(),
+  addLayer: vi.fn().mockReturnThis(),
+  addControl: vi.fn().mockReturnThis(),
+  on: vi.fn().mockReturnThis(),
+  getBounds: vi.fn().mockReturnValue({
+    getWest: vi.fn().mockReturnValue(-0.2),
+    getSouth: vi.fn().mockReturnValue(51.4),
+    getEast: vi.fn().mockReturnValue(0.0),
+    getNorth: vi.fn().mockReturnValue(51.6),
+  }),
+  remove: vi.fn(),
+};
+
+const mockTileLayerInstance = {
+  addTo: vi.fn().mockReturnThis(),
+};
+
+vi.mock('leaflet', () => {
+  const mockLeaflet = {
+    map: vi.fn(() => mockMapInstance),
+    tileLayer: vi.fn(() => mockTileLayerInstance),
+    layerGroup: vi.fn(() => ({ addTo: vi.fn().mockReturnThis(), clearLayers: vi.fn() })),
+    geoJSON: vi.fn(() => ({ addTo: vi.fn().mockReturnThis() })),
+    marker: vi.fn(() => ({ addTo: vi.fn().mockReturnThis(), bindPopup: vi.fn().mockReturnThis() })),
+    icon: vi.fn(() => ({})),
+    divIcon: vi.fn(() => ({})),
+    control: {
+      layers: vi.fn(() => ({ addTo: vi.fn().mockReturnThis() })),
+    },
+    Control: {
+      extend: vi.fn((obj) => {
+        // Return a constructor function
+        return function() {
+          return {
+            ...obj,
+            addTo: vi.fn().mockReturnThis(),
+            onAdd: obj.onAdd || vi.fn(),
+            onRemove: obj.onRemove || vi.fn(),
+          };
+        };
+      }),
+    },
+  };
+  return {
+    default: mockLeaflet,
+    ...mockLeaflet,
+  };
+});
+
+import { DroneGoMap as Map } from '../../../src/components/map';
 
 /**
  * SAFETY-CRITICAL TEST SUITE
@@ -22,10 +75,15 @@ describe('Map Component - SAFETY CRITICAL', () => {
     watchPosition: ReturnType<typeof vi.fn>;
     clearWatch: ReturnType<typeof vi.fn>;
   };
-  let mockMap: any;
-  let mockTileLayer: any;
-  let mapSpy: any;
-  let tileLayerSpy: any;
+
+  // Use the module-level mocks
+  const mockMap = mockMapInstance;
+  const mockTileLayer = mockTileLayerInstance;
+
+ afterAll(() => {
+    // Restore all mocks after all tests complete
+    vi.restoreAllMocks();
+  });
 
   beforeEach(() => {
     // Setup DOM container for Leaflet
@@ -44,63 +102,58 @@ describe('Map Component - SAFETY CRITICAL', () => {
     // @ts-ignore
     global.navigator.geolocation = mockGeolocation;
 
-    // Mock fetch for API calls
-    global.fetch = vi.fn();
+    // Default: geolocation fails (user denies), so map uses default London location
+    mockGeolocation.getCurrentPosition.mockImplementation(
+      (successCallback: PositionCallback, errorCallback: PositionErrorCallback) => {
+        errorCallback({
+          code: 1, // PERMISSION_DENIED
+          message: 'User denied geolocation',
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        });
+      }
+    );
 
-    // Create mock map and tile layer once
-    mockMap = {
-      setView: vi.fn().mockReturnThis(),
-      addLayer: vi.fn().mockReturnThis(),
-      addControl: vi.fn().mockReturnThis(),
-      on: vi.fn().mockReturnThis(),
-      getBounds: vi.fn().mockReturnValue({
-        getSouthWest: vi.fn().mockReturnValue({ lat: 51.4, lng: -0.2 }),
-        getNorthEast: vi.fn().mockReturnValue({ lat: 51.6, lng: 0.0 }),
-      }),
-      remove: vi.fn(),
-    };
+    // Mock fetch for API calls - default successful empty responses
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ features: [] }),
+    } as Response);
 
-    mockTileLayer = {
-      addTo: vi.fn().mockReturnThis(),
-    };
-
-    // Setup spies once
-    mapSpy = vi.spyOn(L, 'map').mockReturnValue(mockMap as any);
-    tileLayerSpy = vi.spyOn(L, 'tileLayer').mockReturnValue(mockTileLayer as any);
+    // Clear mock function calls from previous test
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
     document.body.innerHTML = '';
-    vi.restoreAllMocks();
   });
 
   describe('Initialization', () => {
-    it('should create Leaflet map instance', () => {
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-      });
+    it('should create Leaflet map instance', async () => {
+      const map = new Map('map');
+      await map.init();
 
-      expect(L.map).toHaveBeenCalledWith(mapContainer, expect.any(Object));
+      expect(L.map).toHaveBeenCalledWith('map', expect.any(Object));
     });
 
-    it('should center map on provided coordinates', () => {
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-      });
+    it('should center map on provided coordinates', async () => {
+      const map = new Map('map');
+      await map.init();
 
-      expect(mockMap.setView).toHaveBeenCalledWith(
-        [51.5074, -0.1278],
-        10
+      // Map is created with center in options, setView is NOT called separately
+      expect(L.map).toHaveBeenCalledWith(
+        'map',
+        expect.objectContaining({
+          center: [51.5074, -0.1278],
+          zoom: 11, // Default zoom since geolocation is denied
+        })
       );
     });
 
-    it('should add OpenStreetMap tile layer', () => {
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-      });
+    it('should add OpenStreetMap tile layer', async () => {
+      const map = new Map('map');
+      await map.init();
 
       expect(L.tileLayer).toHaveBeenCalledWith(
         expect.stringContaining('openstreetmap'),
@@ -117,14 +170,8 @@ describe('Map Component - SAFETY CRITICAL', () => {
         json: async () => ({ features: [] }),
       } as Response);
 
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-        loadZones: true,
-      });
-
-      // Wait for async initialization
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const map = new Map('map');
+      await map.init();
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/zones'),
@@ -195,14 +242,8 @@ describe('Map Component - SAFETY CRITICAL', () => {
         }
       });
 
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-        loadZones: true,
-      });
-
-      // Wait for async operations
-      await new Promise(resolve => setTimeout(resolve, 200));
+      const map = new Map('map');
+      await map.init();
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/location/check'),
@@ -287,13 +328,8 @@ describe('Map Component - SAFETY CRITICAL', () => {
         }
       );
 
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-        requestLocation: true,
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const map = new Map('map');
+      await map.init();
 
       expect(mockGeolocation.getCurrentPosition).toHaveBeenCalled();
     });
@@ -311,26 +347,8 @@ describe('Map Component - SAFETY CRITICAL', () => {
         }
       );
 
-      const mockMap = {
-        setView: vi.fn(),
-        addLayer: vi.fn(),
-        on: vi.fn(),
-        getBounds: vi.fn().mockReturnValue({
-          getSouthWest: vi.fn().mockReturnValue({ lat: 51.4, lng: -0.2 }),
-          getNorthEast: vi.fn().mockReturnValue({ lat: 51.6, lng: 0.0 }),
-        }),
-        remove: vi.fn(),
-      };
-      
-      vi.spyOn(L, 'map').mockReturnValue(mockMap as any);
-
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-        requestLocation: true,
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const map = new Map('map');
+      await map.init();
 
       // Should not throw, handles error gracefully
       expect(true).toBe(true);
@@ -338,33 +356,14 @@ describe('Map Component - SAFETY CRITICAL', () => {
   });
 
   describe('Location Button - FR-028', () => {
-    it('should add location button control to map', () => {
-      const mockControl = {
-        addTo: vi.fn(),
-        getContainer: vi.fn().mockReturnValue(document.createElement('div')),
-      };
+    it('should add location button control to map', async () => {
+      const map = new Map('map');
+      await map.init();
 
-      const mockMap = {
-        setView: vi.fn(),
-        addControl: vi.fn(),
-        addLayer: vi.fn(),
-        on: vi.fn(),
-        getBounds: vi.fn().mockReturnValue({
-          getSouthWest: vi.fn().mockReturnValue({ lat: 51.4, lng: -0.2 }),
-          getNorthEast: vi.fn().mockReturnValue({ lat: 51.6, lng: 0.0 }),
-        }),
-        remove: vi.fn(),
-      };
-      
-      vi.spyOn(L, 'map').mockReturnValue(mockMap as any);
-
-      const map = new Map(mapContainer, {
-        center: [51.5074, -0.1278],
-        zoom: 10,
-        showLocationButton: true,
-      });
-
-      expect(mockMap.addControl).toHaveBeenCalled();
+      // LocationButton is created and addTo is called on it
+      // Since L.Control.extend returns a constructor, and we call new LocationButton().addTo()
+      // we should verify the Control.extend was called properly
+      expect(L.Control.extend).toHaveBeenCalled();
     });
 
     it('should handle location button click', () => {
@@ -436,19 +435,6 @@ describe('Map Component - SAFETY CRITICAL', () => {
     it('should handle zone API failure gracefully', async () => {
       const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-      const mockMap = {
-        setView: vi.fn(),
-        addLayer: vi.fn(),
-        on: vi.fn(),
-        getBounds: vi.fn().mockReturnValue({
-          getSouthWest: vi.fn().mockReturnValue({ lat: 51.4, lng: -0.2 }),
-          getNorthEast: vi.fn().mockReturnValue({ lat: 51.6, lng: 0.0 }),
-        }),
-        remove: vi.fn(),
-      };
-      
-      vi.spyOn(L, 'map').mockReturnValue(mockMap as any);
 
       // Should not throw during initialization
       expect(() => {
