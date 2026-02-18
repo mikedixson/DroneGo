@@ -1,0 +1,54 @@
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -5.5116666667,
+          50.3216666667,
+          304.8
+        ],
+        [
+          -5.075,
+          50.6416666667,
+          304.8
+        ],
+        [
+          -5.2083333333,
+          50.7166666667,
+          304.8
+        ],
+        [
+          -5.4,
+          50.6583333333,
+          304.8
+        ],
+        [
+          -5.5666666667,
+          50.5333333333,
+          304.8
+        ],
+        [
+          -5.65,
+          50.4,
+          304.8
+        ],
+        [
+          -5.5116666667,
+          50.3216666667,
+          304.8
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "name": "EGD001 TREVOSE HEAD",
+    "description": "<table border=\"1\" cellpadding=\"1\" cellspacing=\"0\" row_id=\"959\" txt_name=\"TREVOSE HEAD\"><tr><td>501918N 0053042W -<br/>502400N 0053900W -<br/>503200N 0053400W -<br/>503930N 0052400W -<br/>504300N 0051230W -<br/>503830N 0050430W -<br/>501918N 0053042W <br/>Upper limit: 1000 FT ALT<br/>Lower limit: SFC  <br/>Class: </td><td>Activity: Ordnance, Munitions and Explosives.<br/><br/>Service: SUACS: Culdrose APP on 134.055 when open; at other times SUAAIS: London Information on 124.750 MHz.<br/><br/>Contact: Pre-flight information / Booking: Culdrose Operations, Tel: 01326-552415.<br/><br/>SUA Authority: DAATM (HQ Navy).</td></tr></table>",
+    "styleUrl": "#rdpStyleMap",
+    "fill-opacity": 0.5607843137254902,
+    "fill": "#FF0014",
+    "stroke-opacity": 1,
+    "stroke": "#E60014"
+  }
+}

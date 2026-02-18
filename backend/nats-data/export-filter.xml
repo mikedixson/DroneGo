@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ImpExpConfiguration>
+    <FeaturesFilter otherFeatures="EXCLUDE">
+        <Feature name="Ase">
+            <Include>
+                <FilterCondition>
+                    <LogicalCondition Operator="Or">
+                        <SimpleCondition Operator="Equals" Property="codeType">
+                            <Value>P</Value>
+                        </SimpleCondition>
+                        <SimpleCondition Operator="Equals" Property="codeType">
+                            <Value>D</Value>
+                        </SimpleCondition>
+                        <LogicalCondition Operator="And">
+                            <SimpleCondition Operator="Equals" Property="codeType">
+                                <Value>R</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR107%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR160%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR204%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR212%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR214%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR315%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR319%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR321%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR431%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR432%</Value>
+                            </SimpleCondition>
+                            <SimpleCondition Operator="NotLike" Property="codeId">
+                                <Value>%EGR504%</Value>
+                            </SimpleCondition>
+                        </LogicalCondition>
+                    </LogicalCondition>
+                </FilterCondition>
+            </Include>
+        </Feature>
+    </FeaturesFilter>
+    <FilterParameters/>
+</ImpExpConfiguration>
