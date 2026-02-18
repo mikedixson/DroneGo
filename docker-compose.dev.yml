@@ -1,0 +1,28 @@
+version: '3.8'
+
+# Development-only: PostgreSQL with PostGIS
+# Use this to run just the database while developing locally
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: dronego-postgres-dev
+    environment:
+      POSTGRES_DB: dronego
+      POSTGRES_USER: dronego
+      POSTGRES_PASSWORD: dronego_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dronego -d dronego"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local

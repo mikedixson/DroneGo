@@ -1,0 +1,859 @@
+openapi: 3.0.3
+info:
+  title: DroneGo Flight Zone Map API
+  description: |
+    REST API for UK drone flight restriction zone data and TOAL (Take Off and Landing) site information.
+    Provides geospatial query endpoints for checking flight permissions, retrieving restriction zones,
+    and finding suitable launch sites.
+    
+    **Data Sources**: UK Civil Aviation Authority (CAA), NATS AIS, UK NOTAM Service  
+    **License**: Data licensed under Open Government License v3.0  
+    **Attribution**: Contains public sector information licensed under the OGL v3.0
+  version: 1.0.0
+  contact:
+    name: DroneGo API Support
+    email: api@dronego.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.dronego.example.com/v1
+    description: Production server
+  - url: https://staging-api.dronego.example.com/v1
+    description: Staging server
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+
+tags:
+  - name: zones
+    description: Restriction zone queries and details
+  - name: toal
+    description: Take Off and Landing site information
+  - name: location
+    description: Location-based flight permission checks
+  - name: health
+    description: API health and status endpoints
+  - name: admin
+    description: Administrative endpoints (authentication required)
+
+paths:
+  /zones:
+    get:
+      summary: Query restriction zones by bounding box
+      description: |
+        Retrieve all active restriction zones within a specified geographic bounding box.
+        Returns permanent restriction zones and active temporary restrictions (NOTAMs).
+        Used for populating map viewport with restriction polygons.
+        
+        **Performance**: Typical response time <100ms for standard viewport.
+        **Functional Requirement**: FR-002, FR-003, FR-004, FR-006
+      tags:
+        - zones
+      parameters:
+        - name: bounds
+          in: query
+          required: true
+          description: Bounding box coordinates as minLon,minLat,maxLon,maxLat (WGS84)
+          schema:
+            type: string
+            pattern: '^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$'
+            example: "-0.5,51.4,0.0,51.6"
+        - name: types
+          in: query
+          required: false
+          description: Filter by zone types (comma-separated)
+          schema:
+            type: string
+            example: "no-fly,controlled-airspace"
+        - name: includeExpired
+          in: query
+          required: false
+          description: Include expired temporary restrictions (default false)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successful response with GeoJSON FeatureCollection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestrictionZoneCollection'
+              example:
+                type: "FeatureCollection"
+                metadata:
+                  query_time_ms: 45
+                  result_count: 12
+                  bounds: [-0.5, 51.4, 0.0, 51.6]
+                  data_freshness:
+                    last_caa_sync: "2026-02-17T08:00:00Z"
+                    last_notam_sync: "2026-02-17T10:30:00Z"
+                features:
+                  - type: "Feature"
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    geometry:
+                      type: "Polygon"
+                      coordinates: [[[-0.4543, 51.4700], [-0.4543, 51.4850], [-0.4200, 51.4850], [-0.4200, 51.4700], [-0.4543, 51.4700]]]
+                    properties:
+                      zone_type: "airport-frz"
+                      restriction_name: "Heathrow FRZ"
+                      authority_source: "CAA"
+                      altitude_floor: 0
+                      altitude_ceiling: 2500
+                      description: "Flight Restriction Zone around Heathrow Airport. No unauthorized UAS operations permitted."
+                      authorization_possible: false
+                      confidence_level: "primary-authority"
+                      restriction_category: "permanent"
+                      last_updated: "2026-02-15T10:30:00Z"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Invalid bounds format"
+                message: "Bounds parameter must be in format: minLon,minLat,maxLon,maxLat"
+                code: "INVALID_BOUNDS"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /zones/{zoneId}:
+    get:
+      summary: Get detailed information for a specific restriction zone
+      description: |
+        Retrieve complete details for a single restriction zone including full geometry,
+        altitude restrictions, effective dates, and authorization information.
+        
+        **Functional Requirement**: FR-012 (detail panel)
+      tags:
+        - zones
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          description: UUID of the restriction zone
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response with zone details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestrictionZoneDetail'
+        '404':
+          description: Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /location/check:
+    get:
+      summary: Check flight permission at specific coordinates (P1 - Current Location Check)
+      description: |
+        Determine whether drone flight is permitted at a specific location.
+        Returns restriction status (permitted/prohibited/authorization-required) with applicable zones.
+        
+        **Performance Target**: <5 seconds from app open to result display (FR-026, SC-001)
+        **Functional Requirement**: FR-001, FR-011
+        **User Story**: P1 - Check Current Location for Flight Suitability
+      tags:
+        - location
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitude in WGS84 decimal degrees
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+            example: 51.5074
+        - name: lon
+          in: query
+          required: true
+          description: Longitude in WGS84 decimal degrees
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+            example: -0.1275
+        - name: altitude
+          in: query
+          required: false
+          description: Planned flight altitude in feet AGL (default 120ft)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 400
+            default: 120
+      responses:
+        '200':
+          description: Flight permission status determined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationCheck'
+              example:
+                location:
+                  lat: 51.5074
+                  lon: -0.1275
+                  altitude_agl: 120
+                restriction_status: "authorization-required"
+                recommendation:
+                  can_fly: false
+                  requires_authorization: true
+                  reason: "Location is within controlled airspace (London TMA)"
+                applicable_zones:
+                  - zone_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    zone_type: "controlled-airspace"
+                    restriction_name: "London TMA"
+                    description: "Class A controlled airspace. Authorization required for UAS operations."
+                    altitude_floor: 0
+                    altitude_ceiling: 2500
+                nearest_toal:
+                  site_id: "abc12345-def6-7890-ghij-klmnopqrstuv"
+                  site_name: "Hyde Park Open Space"
+                  distance_meters: 450
+                  access_type: "public"
+                  verified: true
+                query_timestamp: "2026-02-17T10:35:42Z"
+                data_freshness:
+                  last_update: "2026-02-17T08:00:00Z"
+                  age_hours: 2.5
+                  is_stale: false
+        '400':
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /location/search:
+    get:
+      summary: Search for locations by address, postcode, or place name (P2 - Search Planning)
+      description: |
+        Geocode a search query (UK address, postcode, or place name) and return coordinates
+        with flight permission status and nearby TOAL sites.
+        
+        **Performance Target**: <2 seconds from search submit to results (FR-027, SC-009)
+        **Functional Requirement**: FR-008, FR-013
+        **User Story**: P2 - Search and Plan Future Flight Locations
+      tags:
+        - location
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (address, postcode, or place name)
+          schema:
+            type: string
+            minLength: 3
+            example: "SW1A 1AA"
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results (default 5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        '200':
+          description: Search results with restriction status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationSearchResults'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /toal:
+    get:
+      summary: Query TOAL (Take Off and Landing) sites by bounding box
+      description: |
+        Retrieve all TOAL sites within a specified geographic bounding box.
+        Returns official and verified suitable launch locations.
+        
+        **Functional Requirement**: FR-005, FR-013
+      tags:
+        - toal
+      parameters:
+        - name: bounds
+          in: query
+          required: true
+          description: Bounding box coordinates as minLon,minLat,maxLon,maxLat (WGS84)
+          schema:
+            type: string
+            pattern: '^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$'
+            example: "-0.5,51.4,0.0,51.6"
+        - name: access_type
+          in: query
+          required: false
+          description: Filter by access type (public, private, permit-required, club-only)
+          schema:
+            type: string
+            enum: [public, private, permit-required, club-only]
+        - name: verified_only
+          in: query
+          required: false
+          description: Return only verified sites (default true)
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection of TOAL sites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TOALSiteCollection'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /toal/nearest:
+    get:
+      summary: Find nearest TOAL site to coordinates
+      description: |
+        Find the closest suitable TOAL site to specified coordinates.
+        
+        **Functional Requirement**: FR-013, SC-004
+      tags:
+        - toal
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitude in WGS84 decimal degrees
+          schema:
+            type: number
+            format: double
+            example: 51.5074
+        - name: lon
+          in: query
+          required: true
+          description: Longitude in WGS84 decimal degrees
+          schema:
+            type: number
+            format: double
+            example: -0.1275
+        - name: max_distance
+          in: query
+          required: false
+          description: Maximum search distance in meters (default 5000)
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 50000
+            default: 5000
+        - name: access_type
+          in: query
+          required: false
+          description: Filter by access type
+          schema:
+            type: string
+            enum: [public, private, permit-required, club-only]
+      responses:
+        '200':
+          description: Nearest TOAL site found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearestTOALResult'
+        '404':
+          description: No TOAL site found within max_distance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: API health check
+      description: |
+        Check API service health and data source freshness.
+        
+        **Functional Requirement**: FR-019 (data staleness warnings)
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              example:
+                status: "healthy"
+                version: "1.0.0"
+                uptime_seconds: 86400
+                data_sources:
+                  caa:
+                    last_sync: "2026-02-17T08:00:00Z"
+                    age_hours: 2.5
+                    is_stale: false
+                    next_sync: "2026-02-18T08:00:00Z"
+                  nats:
+                    last_sync: "2026-02-01T00:00:00Z"
+                    age_hours: 400
+                    is_stale: false
+                    airac_cycle: "2026-02"
+                  notam:
+                    last_sync: "2026-02-17T10:30:00Z"
+                    age_hours: 0.1
+                    is_stale: false
+                database:
+                  connected: true
+                  response_time_ms: 5
+        '503':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /admin/zones/refresh:
+    post:
+      summary: Trigger manual data refresh from sources (Admin only)
+      description: |
+        Manually trigger data sync from CAA, NATS, or NOTAM sources.
+        Requires admin authentication.
+        
+        **Security**: JWT authentication required
+      tags:
+        - admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                  enum: [caa, nats, notam, all]
+                  description: Data source to refresh
+                force:
+                  type: boolean
+                  default: false
+                  description: Force refresh even if recent sync exists
+              required:
+                - source
+      responses:
+        '202':
+          description: Refresh job started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                  source:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, in-progress]
+                  estimated_duration_seconds:
+                    type: integer
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for admin endpoints
+
+  schemas:
+    RestrictionZoneCollection:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        metadata:
+          type: object
+          properties:
+            query_time_ms:
+              type: integer
+              description: Query execution time in milliseconds
+            result_count:
+              type: integer
+            bounds:
+              type: array
+              items:
+                type: number
+              minItems: 4
+              maxItems: 4
+            data_freshness:
+              $ref: '#/components/schemas/DataFreshness'
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/RestrictionZoneFeature'
+
+    RestrictionZoneFeature:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        id:
+          type: string
+          format: uuid
+        geometry:
+          $ref: '#/components/schemas/Polygon'
+        properties:
+          type: object
+          properties:
+            zone_type:
+              type: string
+              enum: [no-fly, controlled-airspace, military-zone, temporary-restriction, airport-frz, danger-area]
+            restriction_name:
+              type: string
+            authority_source:
+              type: string
+            altitude_floor:
+              type: integer
+              nullable: true
+            altitude_ceiling:
+              type: integer
+              nullable: true
+            description:
+              type: string
+            authorization_possible:
+              type: boolean
+            confidence_level:
+              type: string
+              enum: [primary-authority, secondary-source, unverified]
+            restriction_category:
+              type: string
+              enum: [permanent, temporary]
+            effective_start:
+              type: string
+              format: date-time
+              nullable: true
+            effective_end:
+              type: string
+              format: date-time
+              nullable: true
+            last_updated:
+              type: string
+              format: date-time
+
+    RestrictionZoneDetail:
+      allOf:
+        - $ref: '#/components/schemas/RestrictionZoneFeature'
+        - type: object
+          properties:
+            properties:
+              type: object
+              properties:
+                authorization_contact:
+                  type: string
+                  nullable: true
+                data_source:
+                  type: object
+                  properties:
+                    authority_name:
+                      type: string
+                    reliability_level:
+                      type: string
+                    license:
+                      type: string
+                    attribution:
+                      type: string
+
+    LocationCheck:
+      type: object
+      properties:
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: double
+            lon:
+              type: number
+              format: double
+            altitude_agl:
+              type: integer
+        restriction_status:
+          type: string
+          enum: [permitted, prohibited, authorization-required, unknown]
+        recommendation:
+          type: object
+          properties:
+            can_fly:
+              type: boolean
+            requires_authorization:
+              type: boolean
+            reason:
+              type: string
+        applicable_zones:
+          type: array
+          items:
+            type: object
+            properties:
+              zone_id:
+                type: string
+                format: uuid
+              zone_type:
+                type: string
+              restriction_name:
+                type: string
+              description:
+                type: string
+              altitude_floor:
+                type: integer
+                nullable: true
+              altitude_ceiling:
+                type: integer
+                nullable: true
+        nearest_toal:
+          type: object
+          nullable: true
+          properties:
+            site_id:
+              type: string
+              format: uuid
+            site_name:
+              type: string
+            distance_meters:
+              type: number
+            access_type:
+              type: string
+            verified:
+              type: boolean
+        query_timestamp:
+          type: string
+          format: date-time
+        data_freshness:
+          $ref: '#/components/schemas/DataFreshness'
+
+    LocationSearchResults:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              display_name:
+                type: string
+              lat:
+                type: number
+              lon:
+                type: number
+              restriction_status:
+                type: string
+                enum: [permitted, prohibited, authorization-required, unknown]
+              nearest_toal_distance_meters:
+                type: number
+                nullable: true
+
+    TOALSiteCollection:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        metadata:
+          type: object
+          properties:
+            result_count:
+              type: integer
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/TOALSiteFeature'
+
+    TOALSiteFeature:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        id:
+          type: string
+          format: uuid
+        geometry:
+          $ref: '#/components/schemas/Point'
+        properties:
+          type: object
+          properties:
+            site_name:
+              type: string
+            access_type:
+              type: string
+              enum: [public, private, permit-required, club-only]
+            surface_type:
+              type: string
+              enum: [grass, concrete, asphalt, gravel, mixed, unknown]
+              nullable: true
+            facilities:
+              type: object
+              additionalProperties: true
+            operating_hours:
+              type: string
+              nullable: true
+            restrictions:
+              type: string
+              nullable: true
+            verified:
+              type: boolean
+            last_updated:
+              type: string
+              format: date-time
+
+    NearestTOALResult:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/TOALSiteFeature'
+        distance_meters:
+          type: number
+        query_location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lon:
+              type: number
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+        data_sources:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              last_sync:
+                type: string
+                format: date-time
+              age_hours:
+                type: number
+              is_stale:
+                type: boolean
+              next_sync:
+                type: string
+                format: date-time
+                nullable: true
+        database:
+          type: object
+          properties:
+            connected:
+              type: boolean
+            response_time_ms:
+              type: integer
+
+    DataFreshness:
+      type: object
+      properties:
+        last_caa_sync:
+          type: string
+          format: date-time
+        last_nats_sync:
+          type: string
+          format: date-time
+          nullable: true
+        last_notam_sync:
+          type: string
+          format: date-time
+        oldest_data_age_hours:
+          type: number
+        is_stale:
+          type: boolean
+          description: true if any data source is >48 hours old (FR-019)
+
+    Polygon:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
+
+    Point:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - error
+        - message
+        - code

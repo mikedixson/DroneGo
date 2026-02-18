@@ -1,0 +1,30 @@
+# Backend-specific ignores
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+*.tmp
+.cache/

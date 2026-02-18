@@ -1,0 +1,41 @@
+# Environment variables (contains secrets)
+.env
+.env*.local
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node modules (if using Node/npm)
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
