@@ -12,6 +12,7 @@ import { zonesRouter } from './api/zones.js';
 import { locationRouter } from './api/location.js';
 import { airspaceRouter } from './api/airspace.js';
 import { toalRouter } from './api/toal.js';
+import { propertyRestrictionsRouter } from './api/property-restrictions.js';
 
 /**
  * Create and configure Express application
@@ -57,6 +58,7 @@ export function createApp(): Application {
   app.use('/api/v1/location', locationRouter);
   app.use('/api/v1/airspace', airspaceRouter);
   app.use('/api/v1/toal', toalRouter);
+  app.use('/api/v1/property-restrictions', propertyRestrictionsRouter);
 
   // 404 handler (must be after all routes)
   app.use(notFoundHandler);
@@ -106,6 +108,8 @@ export async function startServer(): Promise<void> {
         locationCheck: '/api/v1/location/check',
         airspace: '/api/v1/airspace',
         airspaceDetail: '/api/v1/airspace/:airspaceId',
+        propertyRestrictions: '/api/v1/property-restrictions',
+        propertyRestrictionDetail: '/api/v1/property-restrictions/:id',
       });
     });
   } catch (error) {

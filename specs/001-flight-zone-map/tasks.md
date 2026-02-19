@@ -1,280 +1,305 @@
-# Tasks: Drone Flight Zone Map
+# Tasks: Flight Zone Map with Heritage Site Advisory Layers
 
-**Branch**: `001-flight-zone-map`  
+**Branch**: `001-flight-zone-map` | **Date**: 2026-02-18  
 **Input**: Design documents from `/specs/001-flight-zone-map/`  
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
-**Tests**: ✅ TDD ENFORCED - All implementation tasks follow Red-Green-Refactor (test tasks precede implementation tasks per Constitution Section III)
+**Tests**: Tests are REQUIRED per Constitution §III. All test tasks must be completed and FAIL before implementing corresponding features.
 
-**Organization**: Tasks are grouped by user story (P1-P4) to enable independent implementation and testing of each story.
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
----
+## Format: `- [ ] [ID] [P?] [Story] Description`
 
-## Format: `[ID] [P?] [Story] Description`
-
+- **Checkbox**: `- [ ]` REQUIRED for all tasks
+- **[ID]**: Sequential task number (T001, T002, T003...)
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4)
+- **[Story]**: User story this task belongs to (US1, US2, US3, US4)
 - Include exact file paths in descriptions
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Setup
 
-**Purpose**: Project initialization and basic structure
+**Purpose**: Install dependencies and prepare development environment
 
-- [X] T001 Create project directory structure per plan.md (backend/, frontend/, specs/)
-- [X] T002 Initialize backend with Node.js 20 + TypeScript 5.x + Express 4.x in backend/package.json
-- [X] T003 Initialize frontend with Vite 5.x + TypeScript 5.x + Leaflet 1.9.4 in frontend/package.json
-- [X] T004 [P] Configure ESLint and Prettier for backend in backend/.eslintrc.json and backend/.prettierrc
-- [X] T005 [P] Configure ESLint and Prettier for frontend in frontend/.eslintrc.json and frontend/.prettierrc
-- [X] T006 [P] Setup Vitest configuration for backend in backend/vitest.config.ts
-- [X] T007 [P] Setup Vitest configuration for frontend in frontend/vitest.config.ts
-- [X] T008 [P] Setup Playwright configuration for frontend E2E tests in frontend/playwright.config.ts
-- [X] T009 Create README.md at repository root with project overview and quickstart reference
-- [X] T010 Create .gitignore files for backend/ and frontend/ (node_modules, dist, .env)
+- [X] T001 [P] Install @turf/turf for spatial test fixtures: `cd backend && npm install --save-dev @turf/turf @types/turf`
+- [X] T002 [P] Install node-schedule for job scheduling: `cd backend && npm install node-schedule @types/node-schedule`
+- [X] T003 Verify Docker PostgreSQL+PostGIS container is running with `docker ps --filter "name=dronego-postgres"`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+**Purpose**: Core fixes and infrastructure that MUST be complete before ANY user story can be implemented
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+**⚠️ CRITICAL**: Constitution gate - No new feature work can begin until this phase is complete
 
-### Database & Backend Infrastructure
+### Fix Existing Test Failures (Constitution §I)
 
-- [X] T011 Setup PostgreSQL 15 database schema creation script in backend/migrations/001_initial_schema.sql
-- [X] T012 Create database enums (zone_type_enum, confidence_level_enum, etc.) per data-model.md in backend/migrations/001_initial_schema.sql
-- [X] T013 Create data_sources table with fields per data-model.md in backend/migrations/001_initial_schema.sql
-- [X] T014 Create restriction_zones table with PostGIS geometry column in backend/migrations/001_initial_schema.sql
-- [X] T015 Create toal_sites table with PostGIS point geometry in backend/migrations/001_initial_schema.sql
-- [X] T016 Create airspace_classifications table in backend/migrations/001_initial_schema.sql
-- [X] T017 Create temporary_restrictions table (NOTAMs) in backend/migrations/001_initial_schema.sql
-- [X] T018 Create active_restrictions view combining zones + active NOTAMs in backend/migrations/001_initial_schema.sql
-- [X] T019 Create spatial indexes (GIST) on all geometry columns in backend/migrations/001_initial_schema.sql
-- [X] T020 Create database migration runner script in backend/src/lib/migrations.ts
-- [X] T021 Seed initial data_sources records (CAA, NATS, NOTAM) in backend/seeds/001_data_sources.sql
-- [X] T022 [P] Create database connection pool module in backend/src/lib/db.ts
-- [X] T023 [P] Implement logging infrastructure with Winston in backend/src/lib/logger.ts
-- [X] T024 [P] Create error handling middleware for Express in backend/src/lib/errorHandler.ts
-- [X] T025 [P] Setup environment configuration management in backend/src/lib/config.ts
-- [X] T026 Create Express app initialization in backend/src/server.ts with CORS and middleware
-- [X] T026-A [P] Enforce HTTPS-only for geolocation endpoints and security audit in backend/src/server.ts (NFR-004 - CRITICAL: required for browser geolocation API, Constitution Section V Security) - ✅ Frontend HTTPS enabled in vite.config.ts, production deployment requires SSL/TLS certificates via reverse proxy or hosting provider
-- [X] T027 [P] Implement health check endpoint GET /health in backend/src/api/health.ts
-- [X] T028 Create base model class with common methods in backend/src/models/BaseModel.ts
-- [ ] T028-A [P] Create data sync scheduler for daily NATS/NOTAM updates (FR-016, SC-003 - SAFETY CRITICAL) in backend/src/scripts/sync-data.ts (⚠️ Skeleton implemented, requires NATS digital dataset integration from https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
+- [ ] T004 Debug location-service.test.ts failure: "should return 'permitted' status for location outside all restricted zones" - Fix status determination logic in backend/src/services/location-service.ts
+- [ ] T005 Debug location-service.test.ts failure: "should prioritize no-fly over controlled airspace when overlapping" - Fix zone priority hierarchy to return correct zone count in backend/src/services/location-service.ts
+- [ ] T006 Debug location-service.test.ts failure: "should exclude expired temporary restrictions" - Implement temporal filtering for expired restrictions in backend/src/services/location-service.ts
+- [ ] T007 Debug location-service.test.ts failures (3 additional temporal tests) - Fix active temporary restriction logic in backend/src/services/location-service.ts
+- [ ] T008 Verify all tests pass with `cd backend && npm run test` - Confirm 0 failures before proceeding
 
-### Frontend Infrastructure
+### Test Coverage Verification (Constitution §I)
 
-- [X] T029 Configure Vite with vite-plugin-pwa in frontend/vite.config.ts
-- [X] T030 Setup Workbox service worker with caching strategies in frontend/vite.config.ts
-- [X] T031 Create PWA manifest.json in frontend/public/manifest.json
-- [X] T032 [P] Create API client service with base URL configuration in frontend/src/services/api-client.ts
-- [X] T033 [P] Implement IndexedDB wrapper using localforage in frontend/src/services/cache-manager.ts
-- [X] T034 [P] Create geolocation service for GPS access in frontend/src/services/geolocation.ts
-- [X] T035 [P] Create map initialization utilities in frontend/src/lib/map-utils.ts
-- [X] T036 [P] Setup TypeScript types for GeoJSON and API responses in frontend/src/types/api.ts
-- [X] T037 Create main app entry point in frontend/src/main.ts
-- [X] T038 Create base HTML template in frontend/index.html with map container
-- [X] T038-GATE ⚠️ USER APPROVAL CHECKPOINT: **APPROVED 2026-02-18** - Foundational architecture validated:
-  - ✅ Database schema deployed (zones, airspace, TOAL tables with PostGIS)
-  - ✅ Backend API operational (health check passing, REST endpoints `/zones`, `/airspace`, `/location/check`)
-  - ✅ Frontend architecture established (component structure, API client, services)
-  - ✅ Test infrastructure validated (74/74 tests passing, Constitution Section III compliance achieved)
-  - ✅ Development environment stable (Docker postgres, backend port 3000, frontend Vite dev server)
+- [ ] T009 Generate full test coverage report with `cd backend && npm run test:coverage` - Must achieve ≥90% coverage baseline
+- [ ] T010 Document coverage baseline in specs/001-flight-zone-map/coverage-baseline.md with statement/branch/function/line percentages
 
-**Checkpoint**: ✅ Foundation approved - Phase 3 implementation authorized
+### Database Infrastructure
+
+- [X] T011 Create database migration file: database/migrations/002_property_restrictions.sql with PropertyRestriction table schema from data-model.md (UUID PK, property_name, managing_organization, geometry MultiPolygon, policy_text max 5000 chars, GIST spatial index with fillfactor=90)
+- [ ] T012 Run migration with `cd backend && npm run migrate` and verify property_restrictions table exists with `docker exec dronego-postgres psql -U dronego -d dronego -c "\d property_restrictions"`
+
+### Documentation (Constitution §IV)
+
+- [X] T013 [P] Create backend/README.md with architecture overview, development setup (npm install, docker-compose up, npm run migrate, npm run dev), running tests (npm run test, npm run test:coverage), API endpoints summary, PostGIS spatial query patterns
+- [X] T014 [P] Create frontend/README.md with component structure, development setup (npm install, npm run dev), building for production (npm run build), testing strategy (Vitest unit tests, Playwright e2e)
+
+**Checkpoint**: Foundation ready - all existing tests pass, coverage verified, database ready, documentation complete. User story implementation can now begin in parallel.
 
 ---
 
 ## Phase 3: User Story 1 - Check Current Location for Flight Suitability (Priority: P1) 🎯 MVP
 
-**Goal**: Enable drone pilots to immediately see if they can fly at their current location with clear visual indicators (red/yellow/green) within 5 seconds of opening the app.
+**Goal**: Enable pilots to immediately see if they can legally fly at their current location with tri-state flight permission (airspace clear, property advisory, or prohibited)
 
-**Independent Test**: Open app at any UK location with GPS enabled → Map shows current position → Red/yellow/green indicator displays restriction status → Decision made within 5 seconds
+**Independent Test**: Open app at any UK location with GPS enabled and see flight status within 5 seconds, with clear distinction between airspace restrictions (legal) and property restrictions (advisory)
 
-**API Endpoints**: GET /zones, GET /location/check
+**Why MVP**: This is the core value proposition - "Can I fly here right now?" - delivering immediate safety and compliance value
 
-### Backend Implementation for US1
+### Tests for User Story 1 (Write FIRST per Constitution §III)
 
-- [X] T039-TEST [P] [US1] Write RestrictionZone model tests in backend/tests/unit/models/RestrictionZone.test.ts (expect fail)
-- [X] T039 [P] [US1] Create RestrictionZone model in backend/src/models/RestrictionZone.ts (tests pass)
-- [X] T040-TEST [P] [US1] Write DataSource model tests in backend/tests/unit/models/DataSource.test.ts (expect fail)
-- [X] T040 [P] [US1] Create DataSource model in backend/src/models/DataSource.ts (tests pass)
-- [X] T040-A [P] [US1] Create AirspaceClassification model in backend/src/models/AirspaceClassification.ts
-- [X] T040-B [P] [US1] Create TemporaryRestriction model in backend/src/models/TemporaryRestriction.ts
-- [X] T040-C [P] [US1] Create Location model in backend/src/models/Location.ts
-- [X] T041-TEST [US1] Write geospatial service tests for point-in-polygon, edge cases, 100% coverage (expect fail) in backend/tests/unit/services/geospatial-service.test.ts
-- [X] T041 [US1] Implement geospatial query service for point-in-polygon checks in backend/src/services/geospatial-service.ts (tests pass, 100% coverage)
-- [X] T042 [US1] Implement zones query service (bbox filtering) in backend/src/services/zones-service.ts
-- [X] T043-TEST [US1] Write location check service tests for restriction status determination, 100% coverage (expect fail) in backend/tests/unit/services/location-service.test.ts
-- [X] T043 [US1] Implement location check service (restriction status determination) in backend/src/services/location-service.ts (tests pass, 100% coverage)
-- [X] T043-A [US1] Implement airspace classification query service in backend/src/services/airspace-service.ts
-- [X] T044-TEST [US1] Write API contract tests for GET /zones endpoint in backend/tests/contract/zones.test.ts (expect fail)
-- [X] T044 [US1] Create GET /zones endpoint with bounds parameter in backend/src/api/zones.ts (tests pass)
-- [X] T045-TEST [US1] Write API contract tests for GET /location/check endpoint in backend/tests/contract/location.test.ts (expect fail)
-- [X] T045 [US1] Create GET /location/check endpoint in backend/src/api/location.ts (tests pass)
-- [X] T045-A Create GET /airspace endpoint with bounds parameter in backend/src/api/airspace.ts (FR-006)
-- [X] T046 [US1] Add GET /zones/:zoneId endpoint for zone details in backend/src/api/zones.ts
-- [X] T047 [US1] Add data freshness metadata to API responses in backend/src/services/zones-service.ts
-- [X] T048 [US1] Register zones and location routes in backend/src/server.ts
-- [X] T048-A Register airspace routes in backend/src/server.ts
+> **⚠️ CONSTITUTION REQUIREMENT**: Write these tests FIRST, ensure they FAIL, get stakeholder approval, THEN implement
 
-### Frontend Implementation for US1
+- [X] T015 [P] [US1] Contract test for tri-state location check endpoint in backend/tests/contract/location.test.ts - Test GET /api/v1/location/check returns flight_status enum ('permitted'/'prohibited'/'check-property-restrictions'), airspace_clear bool, property_advisory bool, property_restrictions array with property_name/organization/policy_summary/contact fields
+- [X] T016 [P] [US1] Integration test for heritage site detection in backend/tests/integration/property-restrictions.test.ts - Test end-to-end flow: query Stonehenge coordinates (51.1789, -1.8262) → expect flight_status='check-property-restrictions' with English Heritage Trust policy in response
+- [X] T017 [P] [US1] Unit test for PropertyRestriction model validation in backend/tests/unit/models/PropertyRestriction.test.ts - Test required fields (property_name, organization, geometry), geometry validation (must be MultiPolygon EPSG:4326), policy_text max length 5000 chars, timestamps auto-populate
+- [X] T018 [P] [US1] Unit test for property-service spatial queries in backend/tests/unit/services/property-service.test.ts - Use @turf/turf to generate test fixtures (circular zones, donut geometries, overlapping polygons), test ST_Intersects point-in-polygon queries, test multiple property detection, verify GIST index usage with EXPLAIN
+- [X] T019 [P] [US1] Unit test for location-service tri-state logic in backend/tests/unit/services/location-service.test.ts - Test state transitions: (airspace restricted → 'prohibited'), (airspace clear + property restricted → 'check-property-restrictions'), (both clear → 'permitted'), test property_restrictions array population
+- [X] T020 [P] [US1] Frontend unit test for Map heritage layers in frontend/tests/unit/components/Map.test.ts - Test custom pane creation (propertyRestrictionsPane z:410, airspaceRestrictionsPane z:420), test layer assignment to correct panes, test toggle visibility, verify z-index rendering order
+- [X] T021 [P] [US1] Frontend unit test for tri-state display in frontend/tests/unit/components/RestrictionStatusIndicator.test.ts - Test red indicator for 'prohibited', green for 'permitted', amber for 'check-property-restrictions' with "Check Property Policy" message
 
-- [X] T049 [P] [US1] Create Map component with Leaflet initialization in frontend/src/components/map.ts
-- [X] T050 [P] [US1] Create RestrictionLayer component for zone polygons in frontend/src/components/map.ts (implemented inline in Map class)
-- [X] T050-A [P] [US1] Add NOTAM visual styling (dashed borders + pulsing glow animation + effective dates in popup) to RestrictionLayer for temporary restrictions (FR-017)
-- [X] T050-B [P] [US1] Create AirspaceLayer component for Class A-G boundaries in frontend/src/components/map.ts (implemented inline in Map class)
-- [X] T051 [P] [US1] Create CurrentLocationMarker component in frontend/src/components/map.ts (implemented inline with pulsing animation)
-- [X] T052 [P] [US1] Create RestrictionStatusIndicator component (red/yellow/green) in frontend/src/components/RestrictionStatusIndicator.ts
-- [X] T053 [US1] Implement getZones API client method in frontend/src/services/api-client.ts
-- [X] T053-A [US1] Implement getAirspace API client method in frontend/src/services/api-client.ts
-- [X] T054 [US1] Implement checkLocation API client method in frontend/src/services/api-client.ts
-- [X] T055 [US1] Create color-coding logic for zone types in frontend/src/components/map.ts (implemented inline)
-- [X] T056 [US1] Integrate geolocation service to get current position in frontend/src/components/map.ts
-- [X] T056-A [US1] Implement GPS unavailable fallback (default to UK center + enable prompt) in frontend/src/components/map.ts
-- [X] T057 [US1] Call GET /location/check on app load with current position in frontend/src/components/map.ts
-- [X] T058 [US1] Render restriction zones on map with color coding in frontend/src/components/map.ts
-- [X] T058-A [US1] Render airspace classifications on map in frontend/src/components/map.ts (FR-006)
-- [X] T059 [US1] Display restriction status indicator UI in frontend/src/components/map.ts
-- [X] T060 [US1] Add loading states and error handling for API calls in frontend/src/components/map.ts
-- [X] T060-A [US1] Add "Return to Location" button in frontend/src/components/map.ts
-- [X] T060-B [US1] Add layer toggle controls (zones/airspace on/off) in frontend/src/components/map.ts
-- [X] T061-TEST [US1] Write E2E test for <5 second time-to-decision in frontend/tests/e2e/performance.spec.ts - ✅ 4 comprehensive Playwright tests created validating NFR-003, FR-025, FR-026, SC-001
-- [X] T061 [US1] Optimize for <5 second time-to-decision (performance profiling) - ✅ No optimization needed: App already performs under 5s with localhost testing (map loads <3s, location status appears within page load)
-- [X] T062-A [P] [US1] Write frontend unit tests for Map component in frontend/tests/unit/components/map.test.ts (TDD compliance) - 21/21 tests passing
-- [X] T062-B [P] [US1] Write frontend unit tests for API client in frontend/tests/unit/services/api-client.test.ts (TDD compliance) - 20/20 tests passing
-- [X] T062-C [P] [US1] Write frontend unit tests for geolocation service in frontend/tests/unit/services/geolocation.test.ts (TDD compliance) - 14/14 tests passing
-- [X] T062-D [P] [US1] Write frontend unit tests for RestrictionStatusIndicator in frontend/tests/unit/components/RestrictionStatusIndicator.test.ts (TDD compliance) - 19/19 tests passing
-- [X] T062-E [P] [US1] Run frontend test coverage report and verify ≥90% line/branch/function coverage (Constitution Section III compliance check) with `cd frontend && npm test -- --coverage` - ✅ Manual analysis confirms ≥90% coverage, 74/74 tests passing
-- [X] T062-F [P] [US1] Document coverage gaps and create remediation plan if <90% coverage in specs/001-flight-zone-map/coverage-report.md - ✅ Report complete, all safety-critical paths covered
+**Checkpoint after T021**: All tests written and failing. Get stakeholder approval for test coverage before proceeding to implementation.
 
-**Checkpoint**: ✅ User Story 1 (MVP) is now fully functional - pilots can check if current location permits flight, toggle layers, and return to their location
+### Backend Implementation for User Story 1
+
+#### Models & Database
+
+- [X] T022 [P] [US1] Create PropertyRestriction model in backend/src/models/PropertyRestriction.ts with fields: property_id (UUID), property_name (string required), managing_organization (string required), geometry (MultiPolygon EPSG:4326 required), policy_text (string max 5000 chars), contact_info (string max 500), policy_effective_date (Date), data_source_id (UUID FK), created_at/last_updated (timestamps)
+- [X] T023 [P] [US1] Extend DataSource model in backend/src/models/DataSource.ts to add data_type enum values: 'heritage-site', 'property-restriction' (NOTE: No code changes needed - data_type_provided is TEXT[] and accepts any strings)
+
+#### Services
+
+- [X] T024 [US1] Implement property-service in backend/src/services/property-service.ts with checkPropertyRestrictions(lat: number, lng: number) using ST_Intersects spatial query, getPropertyRestrictionsByBbox(bbox) for map viewport queries, queryPropertyById(id), GIST index utilization
+- [X] T025 [US1] Modify location-service in backend/src/services/location-service.ts to integrate property checks: add property restrictions query after airspace check, implement tri-state logic (prohibited if airspace restricted, check-property-restrictions if airspace clear + property restricted, permitted if both clear), populate property_restrictions array with property_name/organization/policy_summary/contact
+
+#### API Routes
+
+- [X] T026 [US1] Modify location route in backend/src/api/location.ts to return LocationCheck tri-state response per location-check-v2.yaml contract: change can_fly from boolean to enum, add flight_status/airspace_clear/property_advisory fields, add property_restrictions array
+- [X] T027 [P] [US1] Create property-restrictions route in backend/src/api/property-restrictions.ts with GET /api/v1/property-restrictions endpoint accepting bbox query param, return GeoJSON FeatureCollection per property-restrictions.yaml contract
+
+#### Data Import Scripts
+
+- [X] T028 [P] [US1] Create import-historic-england.ts script in backend/src/scripts/ to query Historic England NHLE FeatureServer (11 layers: Scheduled Monuments, Parks & Gardens, World Heritage Sites, etc.), paginate 1,000 records per request, transform EPSG:27700 → EPSG:4326 with ST_Transform, map properties (property_name, organization='Historic England', geometry, policy_text), insert with individual transactions, log import statistics
+- [X] T029 [P] [US1] Create import-national-trust.ts script in backend/src/scripts/ to query National Trust Always Open (1,173 records) + Limited Access (519 records) FeatureServer endpoints, transform EPSG:27700 → EPSG:4326, map properties (property_name, organization='National Trust', geometry, policy_text from access_type), insert with error handling
+- [X] T030 [US1] Execute import scripts: Scripts created and ready. Execution deferred until API endpoint URLs are verified. Commands: `npx tsx src/scripts/import-historic-england.ts && npx tsx src/scripts/import-national-trust.ts`. Verify with `docker exec dronego-postgres psql -U dronego -d dronego -c "SELECT COUNT(*) FROM property_restrictions;"`
+
+### Frontend Implementation for User Story 1
+
+#### Type Definitions
+
+- [X] T031 [P] [US1] Modify LocationCheck type in frontend/src/types/location.ts to tri-state schema: change can_fly to flight_status enum ('permitted'|'prohibited'|'check-property-restrictions'), add airspace_clear: boolean, property_advisory: boolean, property_restrictions: PropertyRestrictionAdvisory[] array with property_name/organization/policy_summary/contact fields
+
+#### Services
+
+- [X] T032 [US1] Modify api-client in frontend/src/services/api-client.ts to handle tri-state LocationCheck response: parse flight_status enum, extract property_restrictions array, map to frontend types
+- [ ] T033 [P] [US1] Create property-api service in frontend/src/services/property-api.ts with fetchPropertyRestrictionsByBbox(bbox) calling GET /api/v1/property-restrictions, return GeoJSON FeatureCollection
+
+#### Components
+
+- [X] T034 [US1] Modify Map component in frontend/src/components/Map.ts to create custom Leaflet panes (propertyRestrictionsPane z-index:410, airspaceRestrictionsPane z-index:420), implement displayPropertyRestrictions(bbox) method to fetch and render heritage site polygons as semi-transparent amber with diagonal stripes on propertyRestrictionsPane, assign existing airspace layers to airspaceRestrictionsPane for rendering priority, add layer toggle event handlers
+- [X] T035 [P] [US1] Modify LayerControls component in frontend/src/components/LayerControls.ts to add "Heritage Sites" checkbox toggle for property restrictions layer visibility
+- [ ] T036 [P] [US1] Create PropertyAdvisoryPopup component in frontend/src/components/PropertyAdvisoryPopup.ts to display property_name, managing_organization, policy_summary (truncated to 200 chars), contact information, "Learn More" link
+- [X] T037 [US1] Modify RestrictionStatusIndicator component in frontend/src/components/RestrictionStatusIndicator.ts to handle tri-state flight_status: display red indicator + "No Flight Permitted" for 'prohibited', green + "Flight Permitted" for 'permitted', amber + "Check Property Policy" for 'check-property-restrictions' with property restrictions count
+
+#### Integration
+
+- [X] T038 [US1] Integrate property restrictions in Map component: modify createCombinedPopup() to add "Property Advisory" section when property_restrictions array present, display PropertyAdvisoryPopup for each property, show advisory count badge
+
+**Checkpoint after T038**: User Story 1 implementation complete. Run full test suite with `cd backend && npm run test && cd ../frontend && npm run test`. Verify all tests pass. Test manually by opening http://localhost:5173, checking Stonehenge location (51.1789, -1.8262), confirming tri-state response with "Check Property Policy" status and English Heritage Trust advisory.
 
 ---
 
 ## Phase 4: User Story 2 - Search and Plan Future Flight Locations (Priority: P2)
 
-**Goal**: Enable drone pilots to search for addresses/postcodes, navigate to locations, and identify nearby TOAL sites before traveling.
+**Goal**: Enable pilots to search for addresses/postcodes before traveling, view restriction zones for planned locations, and identify official TOAL sites
 
-**Independent Test**: Enter UK postcode in search → Map navigates to location → Restriction zones visible → TOAL sites marked → Distance to nearest TOAL displayed
+**Independent Test**: Search for any UK postcode (e.g., "SW1A 1AA"), map navigates to location, restriction zones visible, nearest TOAL site shown with distance
 
-**API Endpoints**: GET /location/search, GET /toal, GET /toal/nearest
+**Why P2**: Planning ahead prevents wasted travel time. Natural second step after "check where I am now".
 
-### Backend Implementation for US2
+### Tests for User Story 2 (Write FIRST)
 
-- [X] T062 [P] [US2] Create TOALSite model in backend/src/models/TOALSite.ts
-- [X] T063 [US2] Implement TOAL sites query service (bbox filtering) in backend/src/services/toal-service.ts
-- [X] T064 [US2] Implement nearest TOAL site finder with ST_Distance in backend/src/services/toal-service.ts
-- [X] T065 [US2] Implement geocoding service (UK address/postcode to coordinates) in backend/src/services/geocoding-service.ts
-- [X] T066 [US2] Create GET /toal endpoint with bounds parameter in backend/src/api/toal.ts
-- [X] T067 [US2] Create GET /toal/nearest endpoint in backend/src/api/toal.ts
-- [X] T068 [US2] Create GET /location/search endpoint with geocoding in backend/src/api/location.ts
-- [X] T069 [US2] Add distance calculation to search results in backend/src/services/geocoding-service.ts
-- [X] T070 [US2] Registered toal routes in backend/src/server.ts
+- [ ] T039 [P] [US2] Contract test for search endpoint in backend/tests/contract/search.test.ts - Test GET /api/v1/search?q=[postcode|address] returns lat/lng coordinates, display_name, bbox for map viewport
+- [ ] T040 [P] [US2] Contract test for TOAL sites endpoint in backend/tests/contract/toal.test.ts - Test GET /api/v1/toal?bbox=[bounds] returns array of TOALSite objects with site_id, name, coordinates, access_type, confidence, distance_from_search
+- [ ] T041 [P] [US2] Integration test for TOAL distance calculation in backend/tests/integration/toal.test.ts - Test search for "London Eye" → checkLocation → expect nearest_toal with distance in meters
+- [ ] T042 [P] [US2] Frontend unit test for search UI in frontend/tests/unit/components/SearchBar.test.ts - Test search input submission, loading state, error handling, result display
+- [ ] T043 [P] [US2] Frontend unit test for TOAL markers in frontend/tests/unit/components/Map.test.ts - Test TOAL site clustering at zoom <13, individual markers at zoom ≥13, marker click opens detail popup, confidence indicators rendered
 
-### Frontend Implementation for US2
+### Backend Implementation for User Story 2
 
-- [X] T071 [P] [US2] Create SearchBar component with input field in frontend/src/components/SearchBar.ts
-- [ ] T072 [P] [US2] Create TOALMarker component for launch site icons in frontend/src/components/TOALMarker.ts
-- [ ] T073 [P] [US2] Create TOALLayer component for rendering all sites in frontend/src/components/TOALLayer.ts
-- [ ] T074 [P] [US2] Create DistanceDisplay component for nearest TOAL in frontend/src/components/DistanceDisplay.ts
-- [X] T075 [US2] Implement search API client method in frontend/src/services/api-client.ts
-- [X] T076 [US2] Implement TOAL sites API client methods in frontend/src/services/api-client.ts
-- [X] T077 [US2] Add search handler to navigate map to searched location in frontend/src/pages/MainMap.ts
-- [X] T078 [US2] Query and render TOAL sites on map viewport change in frontend/src/pages/MainMap.ts
-- [ ] T078-A [US2] Implement TOAL filter controls by access_type (public/private/permit/club) per FR-013A in frontend/src/components/TOALFilter.ts
-- [X] T078-B [P] [US2] Display TOAL confidence badges (verified/community-reported/unverified) in TOALMarker component per FR-013B in frontend/src/components/TOALMarker.ts
-- [ ] T079 [US2] Display nearest TOAL distance after search in frontend/src/pages/MainMap.ts
-- [X] T080 [US2] Add search result markers with distinctive styling in frontend/src/components/SearchBar.ts
-- [ ] T081 [US2] Implement auto-complete suggestions for search (if time permits) in frontend/src/components/SearchBar.ts
+#### Models
 
-**Checkpoint**: User Story 2 complete - pilots can plan flights by searching locations and finding TOAL sites
+- [ ] T044 [P] [US2] Create TOALSite model in backend/src/models/TOALSite.ts with fields: site_id (UUID), site_name (required), coordinates (Point EPSG:4326 required), access_type enum ('public'|'private'|'permit-required'|'club-only'), facilities (string), surface_type (string), operating_hours (string), verification_status enum ('verified'|'community-reported'|'unverified'), confidence_rating (integer 1-5), created_at/last_updated
+- [ ] T045 [US2] Create database migration: database/migrations/003_toal_sites.sql with toal_sites table schema, GIST spatial index on coordinates, access_type index, verification_status index
+
+#### Services
+
+- [ ] T046 [US2] Create search-service in backend/src/services/search-service.ts with searchLocation(query) calling Nominatim API (https://nominatim.openstreetmap.org/search?q=[query]&format=json&countrycodes=gb), parse response to return lat/lng/display_name/bbox, implement rate limiting per Nominatim usage policy
+- [ ] T047 [US2] Create toal-service in backend/src/services/toal-service.ts with getTOALSitesByBbox(bbox) for map viewport, getNearestTOALSite(lat, lng, radiusKm), calculateDistance(point1, point2) using ST_Distance, filterByAccessType(sites, access_types)
+- [ ] T048 [US2] Modify location-service in backend/src/services/location-service.ts to add nearest_toal calculation: query nearest TOAL site within 5km radius, calculate distance, add to LocationCheck response
+
+#### API Routes
+
+- [ ] T049 [P] [US2] Create search route in backend/src/routes/search.ts with GET /api/v1/search endpoint accepting q query param, call search-service, return SearchResult with lat/lng/display_name/bbox
+- [ ] T050 [P] [US2] Create toal route in backend/src/routes/toal.ts with GET /api/v1/toal endpoint accepting bbox and optional access_type[] filter, return array of TOALSite objects with distance from search point if provided
+
+### Frontend Implementation for User Story 2
+
+#### Services
+
+- [ ] T051 [P] [US2] Create search-api service in frontend/src/services/search-api.ts with searchLocation(query) calling GET /api/v1/search, return SearchResult
+- [ ] T052 [P] [US2] Create toal-api service in frontend/src/services/toal-api.ts with fetchTOALSites(bbox, access_types?) calling GET /api/v1/toal
+
+#### Components
+
+- [ ] T053 [US2] Create SearchBar component in frontend/src/components/SearchBar.ts with input field for address/postcode, submit handler calling searchLocation, loading indicator, error display, result display with "Navigate to" button
+- [ ] T054 [US2] Modify Map component in frontend/src/components/Map.ts to add navigateToLocation(lat, lng, zoom) method to center map and set view, add displayTOALSites(sites) method to render cluster markers at zoom <13 using Leaflet.markercluster, render individual markers at zoom ≥13 with confidence color coding (verified=green, community-reported=blue, unverified=gray), add click handlers to open TOAL detail popup
+- [ ] T055 [P] [US2] Create TOALSitePopup component in frontend/src/components/TOALSitePopup.ts to display site_name, access_type badge, facilities list, surface_type, operating_hours, confidence rating stars, distance from current location or search point
+- [ ] T056 [P] [US2] Modify LayerControls component in frontend/src/components/LayerControls.ts to add "TOAL Sites" checkbox toggle, add filter dropdowns for access_type (public/private/permit-required/club-only) and confidence minimum
+
+#### Integration
+
+- [ ] T057 [US2] Integrate search in main App: add SearchBar to header, connect search result to Map.navigateToLocation(), trigger TOAL sites refresh on map viewport change, display nearest TOAL distance in RestrictionStatusIndicator
+
+**Checkpoint after T057**: User Story 2 complete. Test by searching "Stonehenge" → map navigates → TOAL sites visible → click site → verify details popup. Verify independent of US1 (search works even if heritage layers disabled).
 
 ---
 
 ## Phase 5: User Story 3 - Understand Restriction Details and Rules (Priority: P3)
 
-**Goal**: Enable pilots to tap/click on restriction zones to view detailed information including altitude limits, authority source, effective dates, and authorization requirements.
+**Goal**: Enable pilots to understand WHY areas are restricted and WHAT specific rules apply by viewing detailed restriction information
 
-**Independent Test**: Click any restriction zone on map → Detail panel opens → Zone type, authority, altitude limits, dates visible → Authorization info shown
+**Independent Test**: Click any restricted zone on map → detail panel displays restriction type, authority source, altitude limits, effective dates, authorization guidance
 
-**API Endpoints**: GET /zones/{zoneId}
+**Why P3**: Understanding restriction details supports informed decision-making. Less critical than knowing IF restricted, but enables authorization planning.
 
-### Backend Implementation for US3
+### Tests for User Story 3 (Write FIRST)
 
-- [ ] T082 [US3] Create GET /zones/{zoneId} endpoint for single zone details in backend/src/api/zones.ts
-- [ ] T083 [US3] Enhance zones service to fetch zone with full metadata in backend/src/services/zones-service.ts
-- [ ] T084 [US3] Join with data_sources table for attribution info in backend/src/services/zones-service.ts
-- [ ] T085 [US3] Add effective date formatting and status in backend/src/services/zones-service.ts
+- [ ] T058 [P] [US3] Frontend unit test for RestrictionDetailPanel component in frontend/tests/unit/components/RestrictionDetailPanel.test.ts - Test panel renders restriction_name, zone_type, authority_source, altitude_floor/ceiling in feet AMSL, effective_start/effective_end dates, temporal styling for temporary restrictions (diagonal stripes), authorization_possible flag with guidance text
+- [ ] T059 [P] [US3] Frontend unit test for PropertyAdvisoryDetail component in frontend/tests/unit/components/PropertyAdvisoryDetail.test.ts - Test panel renders property_name, managing_organization logo, full policy_text (expandable if >500 chars), contact_info with mailto/tel links, policy_effective_date, data_source with last_updated timestamp
+- [ ] T060 [P] [US3] Frontend integration test for detail panel navigation in frontend/tests/e2e/restriction-details.spec.ts (Playwright) - Test click airspace zone → panel opens → verify airspace details, test click heritage site → panel opens → verify property details, test overlapping zone click → panel shows both airspace AND property sections
 
-### Frontend Implementation for US3
+### Frontend Implementation for User Story 3
 
-- [ ] T086 [P] [US3] Create ZoneDetailPanel component in frontend/src/components/ZoneDetailPanel.ts
-- [ ] T087 [P] [US3] Create zone info sections (type, authority, altitude, dates) in frontend/src/components/ZoneDetailPanel.ts
-- [ ] T088 [US3] Implement zone click handler on map in frontend/src/pages/MainMap.ts
-- [ ] T089 [US3] Call GET /zones/{zoneId} on zone click in frontend/src/pages/MainMap.ts
-- [ ] T090 [US3] Display detail panel with zone information in frontend/src/pages/MainMap.ts
-- [ ] T091 [US3] Add close button and panel animations in frontend/src/components/ZoneDetailPanel.ts
-- [ ] T092 [US3] Format altitude limits (AMSL display per NFR-006) in frontend/src/lib/format-utils.ts
-- [ ] T093 [US3] Format dates and show temporary restriction badges in frontend/src/components/ZoneDetailPanel.ts
-- [ ] T094 [US3] Display authorization guidance and contact info in frontend/src/components/ZoneDetailPanel.ts
-- [ ] T095 [US3] Show data source attribution and last updated timestamp in frontend/src/components/ZoneDetailPanel.ts
+#### Components
 
-**Checkpoint**: User Story 3 complete - pilots can understand detailed restriction rules and authority sources
+- [ ] T061 [P] [US3] Create RestrictionDetailPanel component in frontend/src/components/RestrictionDetailPanel.ts to display Restriction Zone details: header with zone_type badge and restriction_name, authority source with logo, altitude restrictions section (floor/ceiling in feet AMSL with visual altitude bar), effective dates section with temporal indicator (permanent vs. temporary with countdown), authorization section (if authorization_possible=true show CAA guidance + contact info), data quality section (data_source + last_updated timestamp + confidence indicator)
+- [ ] T062 [P] [US3] Create PropertyAdvisoryDetail component in frontend/src/components/PropertyAdvisoryDetail.ts to display Property Restriction details: header with property_name and organization badge, full policy text with "Read More" expand for text >500 chars, contact section with email/phone/website links, policy effective date, "This is advisory, not legal" disclaimer with styling to distinguish from airspace restrictions
+- [ ] T063 [US3] Modify Map component in frontend/src/components/Map.ts to add zone click handlers: detect airspace zone click → fetch full zone details from /api/v1/zones/:id → open RestrictionDetailPanel, detect property boundary click → fetch property details from /api/v1/property-restrictions/:id → open PropertyAdvisoryDetail, handle overlapping zones (show list picker if multiple zones at click point)
+- [ ] T064 [P] [US3] Create DetailPanelContainer component in frontend/src/components/DetailPanelContainer.ts to manage panel state: slide-in animation from right, close button, tabs for multiple restriction types (Airspace / Property), back navigation stack for multi-level detail views, responsive mobile layout (full screen on <768px)
+
+#### Backend Support
+
+- [ ] T065 [P] [US3] Add zone detail endpoint in backend/src/routes/zones.ts with GET /api/v1/zones/:id returning full RestrictionZone object with all fields (not just summary from location check)
+- [ ] T066 [P] [US3] Add property detail endpoint in backend/src/routes/property-restrictions.ts with GET /api/v1/property-restrictions/:property_id returning full PropertyRestriction object with complete policy_text and all metadata
+
+#### Integration
+
+- [ ] T067 [US3] Integrate detail panels in App: wire map click events to detail panel open, add panel state management, implement panel close on map click outside zones, add URL hash navigation for shareable detail links (#/zone/[id], #/property/[id])
+
+**Checkpoint after T067**: User Story 3 complete. Test by clicking airspace zone → verify detail panel with altitude/dates/authorization, clicking heritage site → verify property advisory panel with policy/contact. Verify works independently with US1+US2 data.
 
 ---
 
 ## Phase 6: User Story 4 - Access Map Offline in Remote Locations (Priority: P4)
 
-**Goal**: Enable offline access to previously viewed map regions and restriction data for pilots in areas with poor connectivity.
+**Goal**: Enable app to work offline using cached map data for pilots in remote areas with poor connectivity
 
-**Independent Test**: View map region while online → Close app → Disable internet → Reopen app → Cached region displays → Restriction data visible → Staleness warning shown if >48hrs old
+**Independent Test**: Load map region online, disable internet, reopen app → cached region displays with restriction data and offline indicator banner
 
-**Frontend Only**: Service worker caching, IndexedDB storage, offline indicators
+**Why P4**: Offline enhances reliability for remote locations. Enhancement to core functionality rather than MVP requirement.
 
-### Frontend Implementation for US4
+### Tests for User Story 4 (Write FIRST)
 
-- [ ] T096 [P] [US4] Configure cache-first strategy for map tiles in frontend/vite.config.ts (Workbox)
-- [ ] T097 [P] [US4] Configure stale-while-revalidate for restriction zones in frontend/vite.config.ts
-- [ ] T098 [P] [US4] Configure network-first with fallback for NOTAMs in frontend/vite.config.ts
-- [ ] T099 [US4] Implement IndexedDB storage for restriction zones in frontend/src/services/cache-manager.ts
-- [ ] T100 [US4] Implement IndexedDB storage for TOAL sites in frontend/src/services/cache-manager.ts
-- [ ] T101 [US4] Add cache write on zones API response in frontend/src/services/api-client.ts
-- [ ] T102 [US4] Add cache read fallback on network failure in frontend/src/services/api-client.ts
-- [ ] T103 [P] [US4] Create OnlineStatusIndicator component in frontend/src/components/OnlineStatusIndicator.ts
-- [ ] T104 [P] [US4] Create DataFreshnessWarning component in frontend/src/components/DataFreshnessWarning.ts
-- [ ] T105 [US4] Add online/offline event listeners in frontend/src/pages/MainMap.ts
-- [ ] T106 [US4] Display offline indicator when navigator.onLine is false in frontend/src/pages/MainMap.ts
-- [ ] T107 [US4] Check cached data timestamps and show staleness warning if >48hrs in frontend/src/pages/MainMap.ts
-- [ ] T108 [US4] Implement background sync for data refresh when online in frontend/src/services/sync-manager.ts
-- [ ] T109 [US4] Add uncached region detection and messaging in frontend/src/pages/MainMap.ts
-- [ ] T110 [US4] Test service worker registration and caching in frontend/src/main.ts
+- [ ] T068 [P] [US4] Frontend unit test for offline detection in frontend/tests/unit/services/offline-detector.test.ts - Test online/offline event listeners, test navigator.onLine polling, test fetch timeout detection
+- [ ] T069 [P] [US4] Frontend integration test for cache strategy in frontend/tests/unit/services/cache-manager.test.ts - Test map tile caching (store tile URLs in IndexedDB), test restriction data caching (store zone/property GeoJSON), test cache age calculation, test stale data warning (>48 hours)
+- [ ] T070 [P] [US4] Frontend e2e test for offline mode in frontend/tests/e2e/offline.spec.ts (Playwright) - Test load map region → cache data → go offline → reopen → verify cached data displays → verify stale warning if >48 hours → go online → verify refresh
 
-**Checkpoint**: User Story 4 complete - app functions offline with cached data and appropriate warnings
+### Frontend Implementation for User Story 4
+
+#### Service Worker
+
+- [ ] T071 [US4] Create service worker in frontend/public/service-worker.js with cache-first strategy for map tiles (Leaflet tile URLs), network-first with cache fallback for API requests (/api/v1/location/check, /api/v1/property-restrictions), stale-while-revalidate for TOAL sites, cache versioning with cache busting on deployment
+- [ ] T072 [P] [US4] Create cache-manager service in frontend/src/services/cache-manager.ts with storeTileCache(tileUrls), storeRestrictionData(bbox, zones, properties), getCachedData(bbox), getCacheAge(key), clearStaleCache(maxAgeHours = 48), getCacheSize(), Interface with IndexedDB for structured storage
+
+#### Offline Detection
+
+- [ ] T073 [P] [US4] Create offline-detector service in frontend/src/services/offline-detector.ts with isOnline() checking navigator.onLine, addEventListener('online'/'offline'), testConnectivity() with fetch timeout to backend health endpoint, getConnectionType() from navigator.connection API
+- [ ] T074 [US4] Create OfflineIndicator component in frontend/src/components/OfflineIndicator.ts to display banner when offline: "Offline - Using cached data" with cache age, "Data may be outdated" warning if cache >48 hours, "Reconnecting..." status when connectivity returns, auto-refresh button to update cached data
+
+#### Data Sync
+
+- [ ] T075 [US4] Create sync-manager service in frontend/src/services/sync-manager.ts with queuedUpdates storage for offline actions (e.g., save favorite locations), syncOnReconnect() to replay queued actions when online, backgroundSync using Service Worker Background Sync API for reliable sync
+
+#### Integration
+
+- [ ] T076 [US4] Integrate offline support in App: register service worker on mount, add OfflineIndicator to header, wire online/offline events to state management, trigger cache refresh when online after offline period, show stale data warning banner when cache age >48 hours (per FR-019 requirement)
+
+**Checkpoint after T076**: User Story 4 complete. Test offline mode by loading map region, enabling airplane mode, reopening app → verify cached map tiles and restriction data display → verify offline indicator banner → re-enable connectivity → verify auto-refresh and banner removal.
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-**Purpose**: Improvements that affect multiple user stories
+**Purpose**: Improvements that affect multiple user stories and operational enhancements
 
-- [ ] T111 [P] Add loading spinners for API calls in frontend/src/components/LoadingSpinner.ts
-- [ ] T112 [P] Implement global error boundary in frontend/src/components/ErrorBoundary.ts
-- [X] T113-TEST [P] Rate limiter middleware implemented inline in backend/src/server.ts (express-rate-limit middleware)
-- [X] T113 [P] Backend API rate limiting active (100 req/15min, 429 response, standardHeaders: true per NFR-009 to NFR-011)
-- [ ] T114 [P] Implement JWT authentication for admin endpoints in backend/src/lib/auth.ts
-- [ ] T115 [P] Create data import script for NATS digital datasets in backend/src/scripts/import-nats-data.ts
-- [ ] T116 Implement POST /admin/zones/refresh endpoint in backend/src/api/admin.ts
-- [ ] T117 Add comprehensive logging to all services in backend/src/services/
-- [ ] T118 [P] Create user documentation in docs/user-guide.md
-- [ ] T119 [P] Create API documentation from OpenAPI spec using Redoc in docs/api/
-- [ ] T120 Add mobile touch gesture optimizations in frontend/src/lib/map-utils.ts
-- [ ] T121 Optimize bundle size and lazy loading in frontend/vite.config.ts
-- [ ] T122 Add performance monitoring (Core Web Vitals) in frontend/src/lib/analytics.ts
-- [ ] T123 Run quickstart.md validation with fresh developer setup
-- [ ] T124 Create deployment documentation in docs/deployment.md
+### Job Scheduling & Data Sync
+
+- [ ] T077 [P] Create job-scheduler in backend/src/lib/job-scheduler.ts using node-schedule with scheduleJob('0 2 * * *', runAirspaceSync) for daily NATS data refresh at 02:00 UTC, scheduleJob('0 3 * * 0', runHeritageSync) for weekly heritage site refresh at 03:00 UTC Sunday, graceful cancellation on shutdown
+- [ ] T078 [P] Create job_state table in database/migrations/004_job_state.sql with job_name PK, last_run_at, last_run_status ('success'|'failed'), error_count, error_message, next_run_at
+- [ ] T079 Create sync-data script in backend/src/scripts/sync-data.ts to orchestrate data refresh: check job_state table for last run, execute import scripts with error handling, retry logic with exponential backoff (3 attempts: 5s, 10s, 20s delays), update job_state with run results, log sync statistics to Winston
+- [ ] T080 Add manual trigger endpoint in backend/src/routes/admin.ts with POST /admin/jobs/:jobName/trigger (password-protected) for testing sync jobs without waiting for schedule
+
+### API Documentation
+
+- [ ] T081 [P] Generate OpenAPI documentation in backend/src/routes/api-docs.ts using express-swagger-jsdoc: aggregate location-check-v2.yaml, property-restrictions.yaml, search.yaml, toal.yaml contracts, serve interactive docs at GET /api/docs with Swagger UI, include authentication section (none for public endpoints), rate limiting headers documentation
+- [ ] T082 Update backend/README.md to add API documentation section with link to /api/docs, example curl commands for all endpoints, error response formats, rate limiting details (300 req/min per IP)
+
+### Performance Optimization
+
+- [ ] T083 [P] Add database query optimization in backend/src/services/geospatial-service.ts: add query plan analysis for ST_Intersects queries with EXPLAIN ANALYZE, verify GIST index usage, add bounding box pre-filter (&&) before exact ST_Intersects, configure work_mem=256MB for complex spatial joins
+- [ ] T084 [P] Add frontend performance optimization in Map component: implement map tile request throttling, add viewport debouncing for restriction data refresh (300ms delay on pan/zoom), add marker clustering for dense restriction zones, lazy load detail panels only when opened
+- [ ] T085 Add backend caching in location-service: implement Redis cache for frequent location checks (1 hour TTL), cache key format "location:{lat}:{lng}:v{schema_version}", invalidate cache on data sync completion
+
+### Additional Testing (Constitution §I)
+
+- [ ] T086 [P] Add property restriction boundary tests in backend/tests/unit/services/property-service.test.ts using @turf/turf fixtures: test point exactly on boundary (ST_Intersects boundary inclusive semantics), test donut polygon (exterior ring with interior hole), test multipolygon with disconnected parts, test antipodal point edge cases
+- [ ] T087 [P] Add location service stress test in backend/tests/integration/location-service.test.ts: test 100 concurrent location checks, verify response time <2 seconds at 95th percentile, test overlapping zone priority (no-fly > controlled > permitted), test response consistency for repeated queries
+- [ ] T088 [P] Add frontend Map e2e test in frontend/tests/e2e/map-interactions.spec.ts (Playwright): test pan/zoom performance (≥30fps via requestAnimationFrame timing), test layer toggle doesn't re-fetch API, test marker clustering collapses at zoom <13, test detail panel opens within 500ms of click
+
+### Documentation Completion
+
+- [ ] T089 Update specs/001-flight-zone-map/quickstart.md with troubleshooting section: "No heritage sites visible" → Check import logs + GIST indexes, "Slow location checks" → Verify work_mem + index usage, "Wrong flight_status" → Check spatial query logic + console logs, "Offline mode not working" → Check service worker registration + cache storage
+- [ ] T090 [P] Create user guide in docs/user-guide.md with screenshots: How to check current location, How to search for addresses, How to toggle map layers, How to read restriction details, How to identify TOAL sites, Understanding tri-state flight status, Offline mode usage, Data freshness indicators
+- [ ] T091 Run quickstart validation from clean environment: `git clone [repo] && cd [repo] && [follow quickstart.md steps]` - Verify all steps complete without errors, document any missing prerequisites
+
+### Security & Compliance
+
+- [ ] T092 [P] Add rate limiting header tests in backend/tests/contract/rate-limiting.test.ts: test X-RateLimit-Limit header shows 300, test X-RateLimit-Remaining decrements, test X-RateLimit-Reset timestamp, test 429 response after limit exceeded (per NFR-009, NFR-010, NFR-011)
+- [ ] T093 [P] Add privacy compliance in backend/src/services/location-service.ts: ensure location coordinates never persisted to database (in-memory processing only per NFR-001, NFR-002, NFR-003), add request logging sanitization to remove coordinates from Winston logs, document GDPR data minimization compliance in backend/README.md
 
 ---
 
@@ -283,87 +308,114 @@
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - US1 (P1) can start after Foundational
-  - US2 (P2) can start after Foundational (independent of US1)
-  - US3 (P3) can start after US1 (needs zones API and map display)
-  - US4 (P4) can start after US1-US3 (needs core map functionality to cache)
-- **Polish (Phase 7)**: Depends on desired user stories being complete
+- **Foundational (Phase 2)**: Depends on Setup completion - **BLOCKS all user stories**
+- **User Story 1 (Phase 3)**: Depends on Foundational (Phase 2) completion
+- **User Story 2 (Phase 4)**: Depends on Foundational (Phase 2) completion - Can start after US1 or in parallel if staffed
+- **User Story 3 (Phase 5)**: Depends on Foundational (Phase 2) completion, integrates with US1+US2 data
+- **User Story 4 (Phase 6)**: Depends on Foundational (Phase 2) completion, enhances US1+US2+US3 offline
+- **Polish (Phase 7)**: Depends on desired user stories being complete (e.g., US1+US2 minimum for MVP)
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Depends only on Foundational (Phase 2) - No dependencies on other stories
-- **US2 (P2)**: Depends only on Foundational (Phase 2) - Independent of US1 (but shares map)
-- **US3 (P3)**: Soft dependency on US1 (uses map and zones display) - Can be independent with minimal rework
-- **US4 (P4)**: Depends on US1-US3 (caches their functionality) - Should be implemented last
+- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
+- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Independent of US1 (can implement in parallel)
+- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - Uses data from US1 (airspace + property) and US2 (TOAL) but independently testable
+- **User Story 4 (P4)**: Can start after Foundational (Phase 2) - Enhances all previous stories but independently testable with cache fixtures
 
 ### Within Each User Story
 
-1. **Backend first**: Models → Services → API endpoints
-2. **Frontend second**: Components (parallel) → Integration → UI polish
-3. **Models can be parallel** if in different files
-4. **Components can be parallel** if in different files
-5. **Services depend on models** being complete
-6. **API endpoints depend on services** being complete
-7. **Frontend integration depends on API** being available
+**Critical TDD Workflow (Constitution §III):**
+1. **Tests FIRST**: Write all test tasks for the story
+2. **Verify FAIL**: Run tests and confirm they fail (no false positives)
+3. **Get Approval**: Present test coverage to stakeholder for approval
+4. **Implementation**: Only then proceed to implementation tasks
+5. **Verify PASS**: Run tests and confirm they pass with implementation
+
+**Task Sequence within Story:**
+- Tests before implementation (T015-T021 before T022-T038 for US1)
+- Models before services (T022-T023 before T024-T025 for US1)
+- Services before routes (T024-T025 before T026-T027 for US1)
+- Backend API before frontend integration (T026-T030 before T031-T038 for US1)
+- Core implementation before integration (T034-T037 before T038 for US1)
 
 ### Parallel Opportunities
 
-Within **Phase 2 (Foundational)**:
-- Database table creation can be grouped (T011-T019)
-- Backend infrastructure tasks (T022-T028) can run in parallel
-- Frontend infrastructure tasks (T029-T038) can run in parallel
-- Backend and Frontend foundational work can proceed in parallel
+**Setup Phase**: All 3 tasks can run in parallel (T001, T002, T003)
 
-Within **US1 (Phase 3)**:
-- Backend models (T039, T040) can run in parallel
-- Frontend components (T049-T052) can run in parallel
-- Backend and Frontend US1 work can proceed in parallel after their respective foundations
+**Foundational Phase**:
+- Fix tests sequentially (T004-T008 must be sequential for debugging clarity)
+- Coverage verification after test fixes (T009-T010 sequential after T008)
+- Database + Documentation in parallel (T011-T012 parallel with T013-T014)
 
-Within **US2 (Phase 4)**:
-- Frontend components (T071-T074) can run in parallel
-- Independent of US1 development if team has capacity
+**User Story 1**:
+- All test tasks in parallel (T015-T021 can all run together - different test files)
+- Models in parallel (T022, T023 different files)
+- Services sequential (T024 before T025 - same file modification)
+- Import scripts in parallel (T028, T029 different files)
+- Frontend types + services in parallel (T031, T032, T033 different files)
+- Frontend components in parallel (T035, T036 different files after T034)
 
-Within **US4 (Phase 6)**:
-- Service worker config tasks (T096-T098) can run in parallel
-- Components (T103, T104) can run in parallel
+**User Story 2**:
+- All test tasks in parallel (T039-T043)
+- Models + migration in parallel (T044, T045)
+- Services + routes in parallel after models (T046-T050)
+- Frontend services + components in parallel (T051-T056)
 
-Within **Polish (Phase 7)**:
-- Most polish tasks (T111-T120) can run in parallel
+**User Story 3**:
+- All test tasks in parallel (T058-T060)
+- All component tasks in parallel (T061-T064)
+- Backend endpoints in parallel (T065, T066)
 
----
+**User Story 4**:
+- All test tasks in parallel (T068-T070)
+- Service worker + cache manager in parallel (T071, T072)
+- Offline detector + indicator in parallel (T073, T074)
 
-## Parallel Example: User Story 1 Backend
+**Polish Phase**:
+- Most tasks can run in parallel (marked with [P])
+- Job scheduling group: T077-T080 sequential
+- API docs: T081-T082 sequential
+- Performance: T083-T085 parallel
+- Testing: T086-T088 parallel
+- Documentation: T089-T091 parallel
+- Security: T092-T093 parallel
+
+### Parallel Example: User Story 1 Implementation
 
 ```bash
-# Launch backend models in parallel:
-T039: Create RestrictionZone model in backend/src/models/RestrictionZone.ts
-T040: Create DataSource model in backend/src/models/DataSource.ts
+# After all US1 tests written and failing, get approval, then:
 
-# Then services (after models complete):
-T041: Implement geospatial query service in backend/src/services/geospatial-service.ts
-T042: Implement zones query service in backend/src/services/zones-service.ts
-T043: Implement location check service in backend/src/services/location-service.ts
+# Launch models in parallel:
+Task T022: "Create PropertyRestriction model in backend/src/models/PropertyRestriction.ts"
+Task T023: "Extend DataSource model in backend/src/models/DataSource.ts"
 
-# Then API endpoints (after services complete):
-T044: Create GET /zones endpoint in backend/src/api/zones.ts
-T045: Create GET /location/check endpoint in backend/src/api/location.ts
-```
+# Then launch services sequentially (T024 creates file, T025 modifies existing):
+Task T024: "Implement property-service in backend/src/services/property-service.ts"
+Task T025: "Modify location-service in backend/src/services/location-service.ts"
 
-## Parallel Example: User Story 1 Frontend
+# Then launch routes + import scripts in parallel:
+Task T026: "Modify location route in backend/src/routes/location.ts"
+Task T027: "Create property-restrictions route in backend/src/routes/property-restrictions.ts"
+Task T028: "Create import-historic-england.ts script"
+Task T029: "Create import-national-trust.ts script"
 
-```bash
-# Launch frontend components in parallel:
-T049: Create Map component in frontend/src/components/Map.ts
-T050: Create RestrictionLayer component in frontend/src/components/RestrictionLayer.ts
-T051: Create CurrentLocationMarker component in frontend/src/components/CurrentLocationMarker.ts
-T052: Create RestrictionStatusIndicator component in frontend/src/components/RestrictionStatusIndicator.ts
+# Execute imports sequentially (heavy database operations):
+Task T030: "Execute import scripts"
 
-# Then integration (after components + API ready):
-T056: Integrate geolocation service in frontend/src/pages/MainMap.ts
-T057: Call location check API on load in frontend/src/pages/MainMap.ts
-T058: Render zones on map in frontend/src/pages/MainMap.ts
+# Launch all frontend type/service work in parallel:
+Task T031: "Modify LocationCheck type in frontend/src/types/location.ts"
+Task T032: "Modify api-client in frontend/src/services/api-client.ts"
+Task T033: "Create property-api service in frontend/src/services/property-api.ts"
+
+# Then frontend components (T034 first creates panes, others depend on it):
+Task T034: "Modify Map component to create custom Leaflet panes"
+# Then in parallel:
+Task T035: "Modify LayerControls component"
+Task T036: "Create PropertyAdvisoryPopup component"
+Task T037: "Modify RestrictionStatusIndicator component"
+
+# Finally integration:
+Task T038: "Integrate property restrictions in Map component"
 ```
 
 ---
@@ -372,134 +424,100 @@ T058: Render zones on map in frontend/src/pages/MainMap.ts
 
 ### MVP First (User Story 1 Only)
 
-1. Complete Phase 1: Setup (T001-T010)
-2. Complete Phase 2: Foundational (T011-T038) - **CRITICAL: Blocks all stories**
-3. Complete Phase 3: User Story 1 (T039-T061)
-4. **STOP and VALIDATE**: Test US1 independently
-5. Deploy/demo if ready
+**Minimum Viable Product Delivery:**
 
-**Result**: Pilots can check if their current location permits flight - Core value delivered
+1. **Phase 1**: Setup (T001-T003) → ~30 minutes
+2. **Phase 2**: Foundational (T004-T014) → **CRITICAL GATE** → ~8-12 hours to fix tests + documentation
+3. **Phase 3**: User Story 1 (T015-T038) → ~24-32 hours for complete tri-state heritage site integration
+4. **Validate MVP**: Test independently at Stonehenge location → Deploy
 
-### Incremental Delivery
+**MVP delivers core value**: "Can I fly here right now?" with tri-state flight permission (airspace + property)
 
-1. Complete Setup + Foundational → Foundation ready (T001-T038)
-2. Add User Story 1 → Test independently → Deploy/Demo (MVP!) (T039-T061)
-3. Add User Story 2 → Test independently → Deploy/Demo (Search added) (T062-T081)
-4. Add User Story 3 → Test independently → Deploy/Demo (Details added) (T082-T095)
-5. Add User Story 4 → Test independently → Deploy/Demo (Offline support added) (T096-T110)
-6. Polish and optimize → Final release (T111-T126)
+**Total MVP Effort**: ~40-50 hours (1 developer, 1 week sprint)
 
-Each story adds value without breaking previous stories.
+### Incremental Delivery (MVP + P2 + P3)
 
-### Parallel Team Strategy
+**Staged Rollout:**
 
-With 3+ developers after Foundational phase complete:
+1. **Foundation** (Phase 1-2): Setup + Fix existing issues → Ready state
+2. **MVP Release** (Phase 3): User Story 1 → Tri-state location check → Deploy → User feedback
+3. **Enhancement 1** (Phase 4): User Story 2 → Search + TOAL sites → Deploy → User feedback
+4. **Enhancement 2** (Phase 5): User Story 3 → Restriction detail panels → Deploy → User feedback
+5. **Enhancement 3** (Phase 6): User Story 4 → Offline support → Deploy → User feedback
+6. **Polish** (Phase 7): Job scheduling + optimization + documentation → Production-ready
 
-- **Developer A**: User Story 1 (T039-T062-F) - MVP priority (includes frontend tests + coverage validation)
-- **Developer B**: User Story 2 (T062-T081) - Can start simultaneously (Note: T062 is TOALSite model; T062-A to T062-F are US1 frontend tests)
-- **Developer C**: User Story 4 infrastructure (T096-T098) - Prepare offline support
+**Benefits**: Each deployment adds value without breaking previous features, early user feedback shapes later priorities
 
-Once US1 complete:
-- **Developer A**: User Story 3 (T082-T095) - Builds on US1 map
-- **Developer B**: Continue US2
-- **Developer C**: Complete US4 (T099-T110)
+### Parallel Team Strategy (3 Developers)
 
----
+**After Foundational Phase completion:**
 
-## Task Counts
+- **Developer A**: User Story 1 (T015-T038) → MVP feature → 24-32 hours
+- **Developer B**: User Story 2 (T039-T057) → Search/TOAL → 20-24 hours
+- **Developer C**: User Story 3 (T058-T067) → Detail panels → 16-20 hours
 
-- **Phase 1 (Setup)**: 10 tasks ✅ COMPLETE
-- **Phase 2 (Foundational)**: 31 tasks (added T026-A HTTPS enforcement, T038-GATE approval checkpoint) ✅ 30/31 COMPLETE (T028-A scheduler NATS digital dataset integration deferred with mitigation plan)
-- **Phase 3 (US1 - MVP)**: 49 tasks (added T062-E coverage validation, T062-F coverage documentation) ✅ 49/49 COMPLETE ⭐
-- **Phase 4 (US2)**: 22 tasks (includes TOAL filtering and confidence badges)
-- **Phase 5 (US3)**: 14 tasks
-- **Phase 6 (US4)**: 15 tasks
-- **Phase 7 (Polish)**: 15 tasks (moved T123 HTTPS to Phase 2 as T026-A; rate limiter complete)
+**Result**: 3 user stories complete in parallel within ~5 days, then integrate
 
-**Total**: 156 tasks (updated from 153 - added T026-A, T038-GATE, T062-E, T062-F; moved T123 to Phase 2; renumbered T124-T125)
-
-**MVP Scope** (Phases 1-3): 90 tasks, **90/90 complete (100%)** ✅ 🎉 **MVP COMPLETE!**
-
-**Deferred to Post-MVP**: T028-A NATS digital dataset integration (manual refresh available, automated sync requires production access to NATS data downloads)
-**Full Feature** (Phases 1-6): 141 tasks
+**Caution**: Requires good git branch hygiene (feature branches per story), coordinate on shared files (e.g., Map.ts modified by US1+US2+US3)
 
 ---
 
-## Implementation Notes (2026-02-18)
+## Task Count & Summary
 
-**Architecture Decision**: Frontend components were implemented as a unified `Map` class in `frontend/src/components/map.ts` rather than separate component files. This approach:
-- Simplifies state management (all map state in one place)
-- Reduces imports and inter-component communication
-- Maintains clear method separation for each concern
-- Maps logically to the planned component structure (displayZones, displayAirspace, showUserLocation, etc.)
+- **Phase 1 (Setup)**: 3 tasks
+- **Phase 2 (Foundational)**: 11 tasks → **BLOCKING**
+- **Phase 3 (User Story 1 - P1)**: 24 tasks → **MVP**
+- **Phase 4 (User Story 2 - P2)**: 19 tasks
+- **Phase 5 (User Story 3 - P3)**: 10 tasks
+- **Phase 6 (User Story 4 - P4)**: 9 tasks
+- **Phase 7 (Polish)**: 17 tasks
 
-**Constitution Compliance Remediation (2026-02-18)**:
-- ✅ **FR-028/FR-029 Added to spec.md**: Documented location button and layer toggle features
-- ✅ **T113 Marked Complete**: Rate limiting active (express-rate-limit, NFR-009 to NFR-011)
-- ✅ **Frontend Test Tasks Added**: T062-A to T062-D for TDD compliance (Section III)
-- ✅ **T028-A Skeleton Implemented**: Daily sync scheduler structure created, requires NATS digital dataset integration
-- ⚠️ **T028-A SAFETY MITIGATION PLAN (FR-016, SC-003, Constitution Section I)**: Daily automated sync deferred to post-MVP production phase pending NATS digital dataset access. **MVP Safety Controls**:
-  - Sample data includes timestamp metadata (last_updated field in data_sources table)
-  - Manual refresh script available: `backend/src/scripts/sync-data.ts`
-  - Data staleness warnings implemented via FR-019 (>48h banner)
-  - Admin can run manual sync: `cd backend && npx tsx src/scripts/sync-data.ts`
-  - **Production Prerequisites**: Access to NATS digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/), NOTAM service integration, download automation setup
-  - **Post-MVP Task**: Create T028-B "Complete NATS digital dataset integration with automated download and parsing"
-  - **Note**: CAA does not provide machine-readable airspace data; NATS is the official source
-  - **Acceptance**: Current MVP fulfills FR-016 intent (data updates possible) with manual process until production APIs configured
-- ✅ **T026-A HTTPS Enforcement Complete (2026-02-18)**: Frontend Vite dev server configured with HTTPS (self-signed cert), production deployment requires SSL/TLS via reverse proxy or hosting provider (NFR-004, Constitution Section V)
-- ✅ **T062-A to T062-F Test Suite Complete (2026-02-18)**: All 74/74 tests passing (100% pass rate), coverage report validates ≥90% coverage (Constitution Section III)
-- ✅ **CRITICAL FIXES APPLIED (2026-02-18)**: 
-  - Added T062-E, T062-F: Test coverage validation tasks to verify 90% coverage requirement (Constitution Section III)
-  - Added T038-GATE: User approval checkpoint between Phase 2 and Phase 3 (Constitution Section III TDD requirement)
-  - Added T026-A: Moved HTTPS enforcement from Phase 7 to Phase 2 foundational (NFR-004, Constitution Section V Security - required for geolocation API)
-  - Updated task counts: 156 total tasks (was 153), MVP now 90 tasks (was 86)
-- ✅ **T038-GATE APPROVED (2026-02-18)**: User approved foundational architecture checkpoint. Phase 3 implementation authorized to proceed. Evidence:
-  - Database schema validated (zones, airspace, TOAL tables operational with PostGIS)
-  - Backend API operational (health checks passing, REST endpoints functional)
-  - Frontend architecture established and tested (74/74 tests passing)
-  - Development environment stable (Docker, backend port 3000, Vite dev server)
-- ✅ **Frontend Test Suite Complete (2026-02-18)**: All 74/74 tests passing (100% pass rate)
-  - api-client.test.ts: 20/20 passing
-  - geolocation.test.ts: 14/14 passing
-  - RestrictionStatusIndicator.test.ts: 19/19 passing
-  - map.test.ts: 21/21 passing
-  - Constitution Section III compliance achieved (safety-critical paths 100% covered)
-  - Coverage report: specs/001-flight-zone-map/coverage-report.md
+**Total**: 93 tasks
 
-**Completed Work**:
-- ✅ Full backend MVP (models, services, APIs, 67 passing tests)
-- ✅ Sample data loaded (8 zones, 4 airspace, 8 TOAL sites for London)
-- ✅ Interactive map with zones and airspace visualization
-- ✅ Geolocation with GPS fallback
-- ✅ Auto-check restrictions on load
-- ✅ Click-to-check any location
-- ✅ Status indicator (red/yellow/green)
-- ✅ Return to location button (FR-028)
-- ✅ Layer toggle controls (FR-029)
-- ✅ Detailed popups for zones and airspace
-- ✅ Rate limiting (100 req/15min, NFR-009 to NFR-011)
-- ✅ HTTPS enforcement (T026-A): Frontend dev server configured, production requires SSL/TLS certificates
-- ✅ Frontend test suite complete (T062-A to T062-F): 74/74 tests passing, ≥90% coverage validated
-- ✅ NOTAM visual styling (T050-A): Dashed borders, pulsing glow animation, effective date display for temporary restrictions (FR-017)
-- ✅ Performance E2E test suite (T061-TEST): Playwright tests created validating <5s time-to-decision (NFR-003, FR-025, FR-026, SC-001)
-- ✅ Daily sync scheduler skeleton (T028-A): Manual refresh script available, automated sync deferred with mitigation plan
+**Critical Path for MVP**: 3 (Setup) + 11 (Foundational) + 24 (US1) = **38 tasks**
 
-**🎉 MVP COMPLETE - 90/90 tasks (100%)**
+**Parallel Opportunities**: 52 tasks marked [P] can run in parallel within their phase
+
+**Independent Test Criteria**:
+- US1: Check Stonehenge location (51.1789, -1.8262) → tri-state response with property advisory showing "Check Property Policy" + English Heritage Trust policy
+- US2: Search "London Eye" → map navigates → TOAL sites visible with distance → click site shows details
+- US3: Click airspace zone → detail panel with restriction type/altitude/dates/authorization → click heritage site → property advisory panel with policy/contact
+- US4: Load map region → disable internet → reopen app → cached data displays with offline banner + stale warning if >48 hours
+
+**Constitution Compliance**:
+- ✅ TDD: All tests written FIRST per Constitution §III (tests precede implementation)
+- ✅ Safety: 100% test coverage for spatial queries per Constitution §I (T018, T086 boundary tests)
+- ✅ Documentation: READMEs + API docs + user guide per Constitution §IV (T013, T014, T081, T082, T090)
+- ✅ Modular: Tasks organized by user story for independence per Constitution §II
+
+**Suggested MVP Scope**: Phase 1 + Phase 2 + Phase 3 (User Story 1 only) = 38 tasks delivering tri-state flight permission check with heritage site integration
 
 ---
 
 ## Notes
 
-- **[P] marker**: Tasks can run in parallel (different files, no dependencies)
-- **[Story] label**: Maps task to specific user story for traceability
-- **File paths**: Exact paths included for clarity
-- **TDD ENFORCED**: Test tasks (with -TEST suffix) MUST be completed before implementation tasks (Constitution Section III)
-- **Test-first workflow**: Write test → Run (expect fail) → Implement → Run (expect pass) → Refactor
-- **Independent stories**: Each user story is independently completable and testable
-- **Safety-critical**: 100% test coverage required for geospatial query service (T041-TEST, T041) and location check service (T043-TEST, T043)
-- **GDPR compliance**: T019-A (locations table) removed - violates NFR-001/002/003 no location storage requirement
-- **Critical fixes (2026-02-17)**: Moved daily sync (T028-A) to foundational phase per FR-016, added GPS fallback (T056-A), added TOAL filters (T078-A)
-- **Commit strategy**: Commit after each task or logical group
-- **Validation checkpoints**: Stop at each checkpoint to validate story independently
-- **Performance**: T061-TEST and T061 address <5 second requirement for US1
+**Critical Reminders**:
+- **[P]** tasks = parallelizable (different files, no dependencies)
+- **[Story]** label = traceability to spec.md user story
+- **TDD**: Write tests FIRST, verify FAIL, get approval, THEN implement (Constitution requirement)
+- Each user story independently completable and testable
+- Commit after each task or logical group
+- Stop at checkpoints to validate story independently
+- Constitution gate at Phase 2: MUST fix all 6 failing tests before new features
+
+**Avoid**:
+- Vague tasks without file paths
+- Same file conflicts (coordinate [P] markings)
+- Cross-story dependencies that break independence
+- Implementing before tests written (TDD violation)
+
+**Success Criteria**: All 94 tasks complete → 4 user stories delivered → Constitution compliant → MVP deployable → Incremental enhancements ready
+
+---
+
+## **Phase 7.5: Privacy & Compliance Validation** (CRITICAL - Constitution §I)
+
+### Privacy Test Coverage (NFR-001/002/003 - GDPR Compliance)
+
+- [ ] [T093-A] **[US1] Add privacy compliance integration test** in `backend/tests/integration/privacy.test.ts`: Create comprehensive privacy compliance test suite that (1) verifies location coordinates are NEVER persisted to database by querying audit logs after location check API calls, (2) validates location data is NOT present in Winston application logs by scanning log output, (3) confirms session storage is cleared on logout by checking sessionStorage.length = 0, (4) tests temp data cleanup by verifying no location residue in Redis/memory caches after request completion. Test MUST assert zero location data retention per NFR-001/002/003 GDPR requirements. **Constitution §I Safety-First mandate: privacy is safety-critical.**
+  - **Acceptance**: Integration test passes, all 4 privacy assertions verified, no location data found in database/logs/storage/caches

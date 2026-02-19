@@ -5,6 +5,7 @@ import type {
   SearchResult,
   HealthResponse,
   BoundsCoordinates,
+  PropertyRestrictionCollection,
 } from '../types/api.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -180,6 +181,23 @@ class ApiClient {
     }
 
     return this.fetch(`/toal/nearest?${params.toString()}`);
+  }
+
+  /**
+   * GET /property-restrictions - Query property restrictions by bounding box (User Story 1)
+   */
+  async getPropertyRestrictions(bounds: BoundsCoordinates, category?: string): Promise<PropertyRestrictionCollection> {
+    const bbox = `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`;
+    
+    const params = new URLSearchParams({
+      bbox,
+    });
+
+    if (category) {
+      params.append('category', category);
+    }
+
+    return this.fetch<PropertyRestrictionCollection>(`/property-restrictions?${params.toString()}`);
   }
 
   /**

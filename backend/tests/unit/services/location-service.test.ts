@@ -41,25 +41,22 @@ describe('LocationService - SAFETY CRITICAL', () => {
 
     // Create test data sources
     const caaResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('CAA', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('CAA', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['CAA'] = caaResult.rows[0].source_id;
 
     const natsResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('NATS', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('NATS', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['NATS'] = natsResult.rows[0].source_id;
 
     const modResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('MoD', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('MoD', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['MoD'] = modResult.rows[0].source_id;
@@ -500,6 +497,409 @@ describe('LocationService - SAFETY CRITICAL', () => {
       const duration = Date.now() - startTime;
 
       expect(duration).toBeLessThan(5000);
+    });
+  });
+});
+
+/**
+ * T019: Tri-State Logic Tests for User Story 1
+ * 
+ * Tests the tri-state flight status determination:
+ * - State 1 (prohibited): Airspace restricted → flight_status='prohibited'
+ * - State 2 (check-property-restrictions): Airspace clear + property restricted → flight_status='check-property-restrictions'
+ * - State 3 (permitted): Airspace clear + no property restrictions → flight_status='permitted'
+ * 
+ * Also tests property_restrictions array population with all required fields.
+ */
+describe('LocationService - Tri-State Logic (User Story 1)', () => {
+  let service: LocationService;
+  let pool: Pool;
+  let testZoneIds: string[] = [];
+  let testPropertyIds: string[] = [];
+  let testDataSourceIds: { [key: string]: string } = {};
+
+  beforeAll(async () => {
+    pool = getDbPool();
+    await pool.query('SELECT 1');
+    service = new LocationService();
+
+    // Create test data sources
+    const caaResult = await pool.query(
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('CAA', ARRAY['geographic_zones'], 'primary-authority')
+       RETURNING source_id`
+    );
+    testDataSourceIds['CAA'] = caaResult.rows[0].source_id;
+
+    const heritageResult = await pool.query(
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('Historic England', ARRAY['heritage-sites'], 'primary-authority')
+       RETURNING source_id`
+    );
+    testDataSourceIds['Historic England'] = heritageResult.rows[0].source_id;
+  });
+
+  afterAll(async () => {
+    if (testZoneIds.length > 0) {
+      await pool.query('DELETE FROM restriction_zones WHERE zone_id = ANY($1)', [testZoneIds]);
+    }
+    if (testPropertyIds.length > 0) {
+      await pool.query('DELETE FROM property_restrictions WHERE property_id = ANY($1)', [testPropertyIds]);
+    }
+
+    const sourceIds = Object.values(testDataSourceIds);
+    if (sourceIds.length > 0) {
+      await pool.query('DELETE FROM data_sources WHERE source_id = ANY($1)', [sourceIds]);
+    }
+  });
+
+  beforeEach(async () => {
+    await pool.query("DELETE FROM restriction_zones WHERE restriction_name LIKE 'Test%'");
+    await pool.query("DELETE FROM property_restrictions WHERE property_name LIKE 'Test%'");
+    testZoneIds = [];
+    testPropertyIds = [];
+  });
+
+  describe('State 1: Prohibited (Airspace Restricted)', () => {
+    it('should return flight_status "prohibited" when airspace restricted regardless of property', async () => {
+      // Create no-fly zone
+      const zoneResult = await pool.query(
+        `INSERT INTO restriction_zones (
+          zone_type, restriction_name, geometry, authority_source, data_source_id,
+          altitude_floor, altitude_ceiling, authorization_possible, confidence_level
+        ) VALUES (
+          'no-fly', 'Test No-Fly Zone',
+          ST_Multi(ST_GeomFromGeoJSON($1)), 'CAA', $2,
+          0, 5000, false, 'primary-authority'
+        ) RETURNING zone_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['CAA'],
+        ]
+      );
+      testZoneIds.push(zoneResult.rows[0].zone_id);
+
+      // Also create property restriction (should be ignored)
+      const propertyResult = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Test Heritage Site', 'Historic England',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Heritage protection.',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(propertyResult.rows[0].property_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.flight_status).toBe('prohibited');
+      expect(result.airspace_clear).toBe(false);
+      expect(result.property_advisory).toBe(false); // Airspace takes precedence
+      expect(result.zones.length).toBeGreaterThan(0);
+      expect(result.property_restrictions.length).toBe(0); // Not populated when airspace restricted
+    });
+
+    it('should return flight_status "prohibited" for controlled airspace requiring authorization', async () => {
+      const zoneResult = await pool.query(
+        `INSERT INTO restriction_zones (
+          zone_type, restriction_name, geometry, authority_source, data_source_id,
+          altitude_floor, altitude_ceiling, authorization_possible, confidence_level
+        ) VALUES (
+          'controlled-airspace', 'Test CTR',
+          ST_Multi(ST_GeomFromGeoJSON($1)), 'CAA', $2,
+          0, 2000, true, 'primary-authority'
+        ) RETURNING zone_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['CAA'],
+        ]
+      );
+      testZoneIds.push(zoneResult.rows[0].zone_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.flight_status).toBe('prohibited');
+      expect(result.airspace_clear).toBe(false);
+    });
+  });
+
+  describe('State 2: Check Property Restrictions (Airspace Clear + Property Restricted)', () => {
+    it('should return flight_status "check-property-restrictions" when airspace clear but property restricted', async () => {
+      // Create property restriction only (no airspace zones)
+      const propertyResult = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, contact_info, data_source_id
+        ) VALUES (
+          'Test Heritage Site', 'English Heritage Trust',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Drone flights require prior written authorization.',
+          'permissions@english-heritage.org.uk',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(propertyResult.rows[0].property_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.flight_status).toBe('check-property-restrictions');
+      expect(result.airspace_clear).toBe(true);
+      expect(result.property_advisory).toBe(true);
+      expect(result.zones.length).toBe(0);
+      expect(result.property_restrictions.length).toBe(1);
+    });
+
+    it('should populate property_restrictions array with all required fields', async () => {
+      const propertyResult = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, contact_info, data_source_id
+        ) VALUES (
+          'Stonehenge', 'English Heritage Trust',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'This is a World Heritage Site. Drone flights require prior written authorization from English Heritage. Unauthorized flights may result in prosecution.',
+          'permissions@english-heritage.org.uk',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(propertyResult.rows[0].property_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.property_restrictions.length).toBe(1);
+
+      const advisory = result.property_restrictions[0];
+      expect(advisory).toHaveProperty('property_name');
+      expect(advisory).toHaveProperty('organization');
+      expect(advisory).toHaveProperty('policy_summary');
+      expect(advisory).toHaveProperty('contact');
+
+      expect(advisory.property_name).toBe('Stonehenge');
+      expect(advisory.organization).toBe('English Heritage Trust');
+      expect(advisory.policy_summary).toContain('authorization');
+      expect(advisory.contact).toBe('permissions@english-heritage.org.uk');
+    });
+
+    it('should include multiple property_restrictions when overlapping', async () => {
+      // Create two overlapping properties
+      const property1 = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Heritage Site 1', 'Organization A',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Policy A',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.15, 51.49],
+                [-0.15, 51.53],
+                [-0.11, 51.53],
+                [-0.11, 51.49],
+                [-0.15, 51.49],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(property1.rows[0].property_id);
+
+      const property2 = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Heritage Site 2', 'Organization B',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Policy B',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(property2.rows[0].property_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.flight_status).toBe('check-property-restrictions');
+      expect(result.property_restrictions.length).toBe(2);
+
+      const names = result.property_restrictions.map(p => p.property_name);
+      expect(names).toContain('Heritage Site 1');
+      expect(names).toContain('Heritage Site 2');
+    });
+
+    it('should truncate policy_summary to 200 characters', async () => {
+      const longPolicy = 'This is a very long policy text. '.repeat(20); // ~660 chars
+
+      const propertyResult = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Long Policy Site', 'Test Org',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          $2,
+          $3
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          longPolicy,
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(propertyResult.rows[0].property_id);
+
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      const advisory = result.property_restrictions[0];
+      expect(advisory.policy_summary.length).toBeLessThanOrEqual(203); // 200 + "..."
+      expect(advisory.policy_summary).toMatch(/\.\.\.$/);
+    });
+  });
+
+  describe('State 3: Permitted (Both Clear)', () => {
+    it('should return flight_status "permitted" when airspace clear and no property restrictions', async () => {
+      const result = await service.checkLocation(-0.13, 51.51);
+
+      expect(result.flight_status).toBe('permitted');
+      expect(result.airspace_clear).toBe(true);
+      expect(result.property_advisory).toBe(false);
+      expect(result.zones.length).toBe(0);
+      expect(result.property_restrictions.length).toBe(0);
+    });
+  });
+
+  describe('Query Performance', () => {
+    it('should complete location check with property query in <5 seconds (FR-026)', async () => {
+      // Create property restriction
+      const propertyResult = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Performance Test Site', 'Test Org',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Performance test.',
+          $2
+        ) RETURNING property_id`,
+        [
+          JSON.stringify({
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-0.14, 51.50],
+                [-0.14, 51.52],
+                [-0.12, 51.52],
+                [-0.12, 51.50],
+                [-0.14, 51.50],
+              ],
+            ],
+          }),
+          testDataSourceIds['Historic England'],
+        ]
+      );
+      testPropertyIds.push(propertyResult.rows[0].property_id);
+
+      const startTime = Date.now();
+      const result = await service.checkLocation(-0.13, 51.51);
+      const duration = Date.now() - startTime;
+
+      expect(duration).toBeLessThan(5000);
+      expect(result.flight_status).toBe('check-property-restrictions');
     });
   });
 });

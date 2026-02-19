@@ -4,15 +4,21 @@ import { GeocodingService } from '../services/geocoding-service.js';
 import { logger } from '../lib/logger.js';
 
 /**
- * Location API Router
+ * Location API Router (User Story 1 - Tri-State Integration)
  * 
  * Provides HTTP endpoints for checking flight restriction status at specific locations.
  * 
  * SAFETY-CRITICAL: This endpoint determines flight legality. Incorrect responses
- * could lead to illegal flights in restricted airspace.
+ * could lead to illegal flights in restricted airspace or unauthorized flights
+ * over heritage sites.
+ * 
+ * Tri-State Response (User Story 1):
+ * - 'prohibited': Airspace restricted, flight not allowed
+ * - 'check-property-restrictions': Airspace clear but property restrictions apply
+ * - 'permitted': Both airspace and property clear
  * 
  * Endpoints:
- * - GET /location/check - Check restriction status at coordinates
+ * - GET /location/check - Check restriction status at coordinates (tri-state)
  * 
  * Per FR-026: Location checks must complete within 5 seconds.
  */
@@ -22,22 +28,42 @@ const locationService = new LocationService();
 const geocodingService = new GeocodingService();
 
 /**
- * GET /location/check
+ * GET /location/check (User Story 1 - Tri-State)
  * 
  * Check restriction status at a specific coordinate.
- * Determines if flight is permitted, prohibited, or requires authorization.
+ * Returns tri-state flight status:
+ * - 'prohibited': Airspace restricted
+ * - 'check-property-restrictions': Property restrictions apply
+ * - 'permitted': Both clear
  * 
  * Query Parameters:
  * - lng (required): Longitude (WGS84, -180 to 180)
  * - lat (required): Latitude (WGS84, -90 to 90)
  * 
  * Response:
- * - 200: LocationCheckResult with status, zones, TOAL info
+ * - 200: LocationCheckResult with tri-state status, zones, property restrictions, TOAL info
  * - 400: Invalid parameters
  * - 500: Server error
  * 
  * @example
- * GET /location/check?lng=-0.1278&lat=51.5074
+ * GET /location/check?lng=-1.8262&lat=51.1789
+ * Response:
+ * {
+ *   "flight_status": "check-property-restrictions",
+ *   "airspace_clear": true,
+ *   "property_advisory": true,
+ *   "zones": [],
+ *   "property_restrictions": [
+ *     {
+ *       "property_name": "Stonehenge",
+ *       "organization": "English Heritage Trust",
+ *       "policy_summary": "World Heritage Site. Drone flights require...",
+ *       "contact": "permissions@english-heritage.org.uk"
+ *     }
+ *   ],
+ *   "message": "Airspace clear, but property restrictions may apply.",
+ *   "nearest_toal": null
+ * }
  */
 locationRouter.get('/check', async (req: Request, res: Response) => {
   try {
@@ -67,11 +93,12 @@ locationRouter.get('/check', async (req: Request, res: Response) => {
     // Call location service to check restriction status
     const result = await locationService.checkLocation(lng, lat);
 
-    // Return result with metadata
+    // Return tri-state result (User Story 1)
     res.json({
-      restriction_status: result.restriction_status,
-      can_fly: result.can_fly,
-      authorization_required: result.authorization_required,
+      // User Story 1 tri-state fields
+      flight_status: result.flight_status,
+      airspace_clear: result.airspace_clear,
+      property_advisory: result.property_advisory,
       zones: result.zones.map((zone) => ({
         zone_id: zone.zone_id,
         zone_type: zone.zone_type,
@@ -87,6 +114,8 @@ locationRouter.get('/check', async (req: Request, res: Response) => {
         confidence_level: zone.confidence_level,
         last_updated: zone.last_updated,
       })),
+      property_restrictions: result.property_restrictions,
+      message: result.message,
       nearest_toal: result.nearest_toal
         ? {
             site_id: result.nearest_toal.site_id,
@@ -97,16 +126,25 @@ locationRouter.get('/check', async (req: Request, res: Response) => {
             distance_meters: result.nearest_toal.distance_meters,
           }
         : null,
+      
+      // Legacy fields for backward compatibility (deprecated)
+      restriction_status: result.restriction_status,
+      can_fly: result.can_fly,
+      authorization_required: result.authorization_required,
+      
       metadata: {
         query_timestamp: new Date().toISOString(),
         coordinates: { lng, lat },
       },
     });
 
-    logger.info('Location check successful', {
+    logger.info('Location check successful (tri-state)', {
       coordinates: { lng, lat },
-      restrictionStatus: result.restriction_status,
+      flightStatus: result.flight_status,
+      airspaceClear: result.airspace_clear,
+      propertyAdvisory: result.property_advisory,
       zonesCount: result.zones.length,
+      propertyRestrictionsCount: result.property_restrictions.length,
       hasNearestToal: result.nearest_toal !== null,
     });
   } catch (error) {

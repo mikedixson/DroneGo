@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: DroneGo Location Check API v2
+  version: 2.0.0
+  description: Tri-state flight permission check (airspace + property)
+
+paths:
+  /api/v1/location/check:
+    get:
+      summary: Check flight permission at coordinates
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+      responses:
+        '200':
+          description: Flight status determined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationCheck'
+
+components:
+  schemas:
+    LocationCheck:
+      type: object
+      required:
+        - flight_status
+        - airspace_clear
+        - property_advisory
+        - zones
+        - message
+      properties:
+        flight_status:
+          type: string
+          enum: [permitted, prohibited, check-property-restrictions]
+        airspace_clear:
+          type: boolean
+        property_advisory:
+          type: boolean
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/RestrictionZone'
+        property_restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyAdvisory'
+        message:
+          type: string
+          example: "Airspace clear, but property restrictions may apply."
+
+    PropertyAdvisory:
+      type: object
+      properties:
+        property_name:
+          type: string
+        organization:
+          type: string
+        policy_summary:
+          type: string
+        contact:
+          type: string
+
+    RestrictionZone:
+      type: object
+      properties:
+        zone_id:
+          type: string
+        zone_type:
+          type: string
+        restriction_name:
+          type: string

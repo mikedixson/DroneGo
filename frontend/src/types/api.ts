@@ -85,10 +85,57 @@ export interface TOALSiteCollection {
   features: TOALSiteFeature[];
 }
 
+/**
+ * Property restriction advisory (User Story 1)
+ */
+export interface PropertyRestrictionAdvisory {
+  property_name: string;
+  organization: string;
+  policy_summary: string;
+  contact: string;
+}
+
+/**
+ * Property restriction feature properties (User Story 1)
+ */
+export interface PropertyRestrictionProperties {
+  property_id: string;
+  property_name: string;
+  organization: string;
+  policy_text: string;
+  contact_info: string | null;
+  policy_effective_date: string | null;
+}
+
+/**
+ * Property restriction GeoJSON feature (User Story 1)
+ */
+export interface PropertyRestrictionFeature {
+  type: 'Feature';
+  geometry: GeoJSONGeometry;
+  properties: PropertyRestrictionProperties;
+}
+
+/**
+ * Property restriction GeoJSON collection (User Story 1)
+ */
+export interface PropertyRestrictionCollection {
+  type: 'FeatureCollection';
+  features: PropertyRestrictionFeature[];
+}
+
+/**
+ * Location check result with tri-state flight status (User Story 1)
+ */
 export interface LocationCheckResult {
-  restriction_status: 'permitted' | 'controlled' | 'no-fly' | 'unknown';
-  can_fly: boolean;
-  authorization_required: boolean;
+  // User Story 1 tri-state fields
+  flight_status: 'permitted' | 'prohibited' | 'check-property-restrictions';
+  airspace_clear: boolean;
+  property_advisory: boolean;
+  property_restrictions: PropertyRestrictionAdvisory[];
+  message?: string;
+
+  // Existing fields
   zones: Array<{
     zone_id: string;
     zone_type: string;
@@ -119,6 +166,11 @@ export interface LocationCheckResult {
     };
     timestamp: string;
   };
+
+  // Legacy fields for backward compatibility (deprecated)
+  restriction_status?: 'permitted' | 'controlled' | 'no-fly' | 'unknown';
+  can_fly?: boolean;
+  authorization_required?: boolean;
 }
 
 export interface SearchResult {

@@ -33,25 +33,22 @@ describe('GeospatialService - SAFETY CRITICAL', () => {
     
     // Create test data sources for restriction zones
     const caaResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('CAA', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('CAA', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['CAA'] = caaResult.rows[0].source_id;
     
     const natsResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('NATS', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('NATS', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['NATS'] = natsResult.rows[0].source_id;
     
     const modResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('MoD', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level)
+       VALUES ('MoD', ARRAY['geographic_zones'], 'primary-authority')
        RETURNING source_id`
     );
     testDataSourceIds['MoD'] = modResult.rows[0].source_id;

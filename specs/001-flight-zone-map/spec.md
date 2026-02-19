@@ -15,6 +15,14 @@
 - Q: How should offline cached data older than 48 hours be handled? → A: Display stale data with prominent warning banner and "Verify independently" disclaimer
 - Q: What is the authoritative data source for TOAL sites? → A: Community-submitted sites with manual verification and confidence ratings
 
+### Session 2026-02-18
+
+- Q: What types of restrictions should the app display? → A: Both airspace AND land restrictions with clear visual distinction
+- Q: How should heritage site drone policies be represented? → A: Advisory layer with site-specific policies shown on click
+- Q: How often should heritage site data be refreshed? → A: Weekly updates
+- Q: How should overlapping restrictions be visually prioritized? → A: Airspace legal restrictions always on top, property advisory beneath
+- Q: How should the location check determine "flight_status" when airspace is clear but property has restrictions? → A: flight_status enum with tri-state (permitted/prohibited/check-property-restrictions)
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -31,10 +39,11 @@ The pilot opens the app on their mobile device, and the map immediately shows th
 
 **Acceptance Scenarios**:
 
-1. **Given** a pilot is at a location with GPS enabled, **When** they open the app, **Then** the map displays their current position and clearly indicates whether the area is suitable for flying
+1. **Given** a pilot is at a location with GPS enabled, **When** they open the app, **Then** the map displays their current position and clearly indicates whether the area is suitable for flying with both airspace and property status
 2. **Given** the pilot is in a no-fly zone, **When** they view their location, **Then** the area is marked with a clear red indicator and "No Flight Permitted" designation
-3. **Given** the pilot is in an unrestricted area, **When** they view their location, **Then** the area is marked with a green indicator and "Flight Permitted" designation
+3. **Given** the pilot is in an unrestricted area with no property restrictions, **When** they view their location, **Then** the area is marked with a green indicator and "Flight Permitted" designation
 4. **Given** the pilot is in controlled airspace, **When** they view their location, **Then** the area shows a yellow/amber indicator with "Authorization Required" designation
+5. **Given** the pilot is in unrestricted airspace but on property with drone restrictions (e.g., National Trust site), **When** they view their location, **Then** the area shows green airspace status with amber property advisory overlay and "Check Property Policy" designation
 
 ---
 
@@ -101,7 +110,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 - **How does the system handle temporary flight restrictions (NOTAMs)?** Temporary restrictions are displayed with distinctive styling (e.g., diagonal stripes or pulsing borders) and clearly labeled with effective date/time ranges. The detail view indicates "TEMPORARY" and shows start/end dates.
 
-- **How are overlapping restrictions displayed?** When multiple restrictions overlap (e.g., airport zone + temporary restriction), the map shows the most restrictive classification visually using hierarchy: RED (prohibited) > AMBER (authorization required) > GREEN (permitted). The detail panel lists all applicable restrictions in priority order with a layered view or list format.
+- **How are overlapping restrictions displayed?** When multiple restrictions overlap, the map uses layering hierarchy: (1) Legal airspace restrictions render on top with solid styling (RED prohibited > AMBER authorization required > GREEN permitted); (2) Property advisory restrictions render beneath with semi-transparent styling or border patterns; (3) When both types overlap, airspace status determines primary color while property restrictions show as secondary indicators. The detail panel lists airspace restrictions first, then property restrictions, with clear section headers distinguishing legal vs. advisory status.
 
 - **What if restriction data is outdated or unavailable?** Each data source has a timestamp. If cached data is older than 48 hours, a prominent warning banner appears with "Data may be outdated. Verify independently before flight" messaging. Stale data remains visible to allow pilots in remote areas to make informed decisions. If no data is available for a region, the area is marked as "Unknown - Verify Independently" with guidance to check official sources.
 
@@ -122,6 +131,9 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **FR-005**: System MUST display official TOAL (Take Off and Landing) sites with distinctive marker icons
 - **FR-006**: System MUST show airspace classification boundaries (Class A-G airspace zones)
 - **FR-007**: System MUST use intuitive color coding consistently throughout the map (red=prohibited, amber=authorization required, green=permitted)
+- **FR-007A**: System MUST display property-based restrictions (heritage sites, National Trust, English Heritage) as advisory layers visually distinct from legal airspace restrictions
+- **FR-007B**: System MUST render airspace legal restrictions with higher visual z-index priority than property advisory layers to ensure regulatory compliance information is always visible
+- **FR-007C**: System MUST display heritage sites (National Trust, English Heritage, Historic England) as a toggleable layer with site boundaries and property-specific drone policies accessible via click/tap
 
 **User Interaction:**
 
@@ -140,8 +152,9 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 - **FR-014**: System MUST integrate with NATS (National Air Traffic Services) official airspace data from digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 - **FR-015**: System MUST display the data source authority and last update timestamp for all restriction zones
-- **FR-016**: System MUST update restriction data at least once daily to maintain accuracy
-- **FR-017**: System MUST include temporary flight restrictions (NOTAMs) with effective date/time ranges
+- **FR-016**: System MUST update airspace restriction data (NATS, CAA) at least once daily to maintain accuracy
+- **FR-016A**: System MUST update heritage site and property restriction data at least once weekly (policies change less frequently than airspace)
+- **FR-017**: System MUST include temporary flight restrictions (NOTAMs) with effective date/time ranges **[DEFERRED TO PHASE 8 - NOT IN MVP SCOPE]**
 - **FR-018**: System MUST display a confidence indicator showing whether data comes from primary authority sources
 - **FR-019**: System MUST display a prominent warning banner when cached data is older than 48 hours with "Verify independently before flight" disclaimer
 - **FR-019A**: Stale cached data (>48 hours old) MUST remain accessible to users with clear visual warning indicators
@@ -185,13 +198,15 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 ### Key Entities
 
-- **Restriction Zone**: Represents a geographic area with flying limitations. Includes zone type (no-fly, controlled airspace, military zone, temporary restriction), boundary coordinates (polygon), authority source, effective dates/times, altitude restrictions (floor and ceiling heights in feet AMSL), description of restrictions, and whether authorization can be requested.
+- **Restriction Zone**: Represents a geographic area with flying limitations based on aviation law. Includes zone type (no-fly, controlled airspace, military zone, temporary restriction), boundary coordinates (polygon), authority source, effective dates/times, altitude restrictions (floor and ceiling heights in feet AMSL), description of restrictions, and whether authorization can be requested. This entity covers legal airspace restrictions only.
+
+- **Property Restriction**: Represents landowner/property-based restrictions separate from airspace law. Includes property name, managing organization (National Trust, English Heritage, Historic England, etc.), boundary coordinates (polygon), property-specific drone policy text, contact information for permission requests, and policy effective date. These are advisory restrictions indicating property owner policies rather than legal aviation restrictions.
 
 - **TOAL Site**: Represents an officially designated or suitable Take Off and Landing location. Includes site name, coordinates (point), access rules (public/private/permit required), available facilities, surface type, operating hours if applicable, verification status (verified/community-reported/unverified), and confidence rating.
 
 - **Airspace Classification**: Represents controlled airspace types defined by aviation authorities. Includes class designation (A, B, C, D, E, F, G), boundary coordinates, altitude ranges, applicable rules for each class, and controlling authority.
 
-- **Location**: Represents either the user's current position or a searched location. Includes coordinates (latitude/longitude), determined restriction status (permitted/prohibited/authorization required), nearest TOAL site reference with distance, and applicable restrictions at that point.
+- **Location**: Represents either the user's current position or a searched location. Includes coordinates (latitude/longitude), determined airspace restriction status using tri-state logic (flight_status: permitted = airspace clear, prohibited = airspace restricted, check-property-restrictions = airspace clear but property restrictions apply), property_restrictions array listing any property-based policies, nearest TOAL site reference with distance, and applicable airspace restrictions at that point.
 
 - **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., NATS for airspace data, CAA for regulatory guidance), data type provided, last update timestamp, update frequency, and reliability/confidence level.
 
@@ -227,7 +242,7 @@ The following assumptions were made to create this specification with reasonable
 
 - **Geographic Coverage**: Initial release focuses on United Kingdom airspace. Can be expanded to other countries in future iterations based on demand.
 
-- **Data Sources**: Primary data source is NATS (National Air Traffic Services) digital datasets. CAA provides regulatory guidance (CAP722) but does not provide machine-readable airspace data. Additional data sources can be integrated as needed.
+- **Data Sources**: Primary airspace data source is NATS (National Air Traffic Services) digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/). CAA provides regulatory guidance (CAP722) but does not provide machine-readable airspace data. Property restriction data is sourced from National Trust Open Data (https://open-data-national-trust.hub.arcgis.com/), English Heritage / Historic England (https://historicengland.org.uk/listing/the-list/data-downloads, https://opendata-historicengland.hub.arcgis.com/), and other property owner organizations as available. Additional data sources can be integrated as needed.
 
 - **TOAL Sites Data**: TOAL sites are sourced from community submissions with manual verification. Each site includes a confidence rating (verified, community-reported, unverified). No official UK TOAL registry currently exists; if official sources become available (e.g., CAA schemes, local authority registers), they will be integrated as authoritative sources.
 

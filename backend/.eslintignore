@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# IDE
+.vscode/
+.idea/
+
+# Generated files
+*.min.js

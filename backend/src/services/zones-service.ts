@@ -252,9 +252,9 @@ export class ZonesService {
 
     // Fetch data source info
     const result = await this.pool.query(
-      `SELECT authority_name, confidence_level, last_update
+      `SELECT authority_name, reliability_level as confidence_level, last_sync_timestamp as last_update
        FROM data_sources
-       WHERE authority_name = ANY($1) AND data_type = 'geographic_zones'`,
+       WHERE authority_name = ANY($1) AND 'geographic_zones' = ANY(data_type_provided)`,
       [authoritySources]
     );
 

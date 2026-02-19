@@ -1,0 +1,46 @@
+openapi: 3.0.3
+info:
+  title: Property Restrictions API
+  version: 1.0.0
+
+paths:
+  /api/v1/property-restrictions:
+    get:
+      summary: Get property restrictions in bounding box
+      parameters:
+        - name: bbox
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "-1.0,51.0,-0.5,51.5"
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: "FeatureCollection"
+                  features:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: "Feature"
+                        geometry:
+                          type: object
+                        properties:
+                          type: object
+                          properties:
+                            property_name:
+                              type: string
+                            organization:
+                              type: string
+                            policy_text:
+                              type: string

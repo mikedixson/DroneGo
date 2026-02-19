@@ -17,6 +17,8 @@ export class DroneGoMap {
   private zonesLayer: L.LayerGroup;
   private airspaceLayer: L.LayerGroup;
   private toalLayer: L.LayerGroup;
+  private propertyRestrictionsLayer: L.LayerGroup;
+  private sssiLayer: L.LayerGroup;
   private currentLocationMarker: L.Marker | null = null;
   private userLocationMarker: L.Marker | null = null;
   private userLocation: { lat: number; lng: number } | null = null;
@@ -27,12 +29,16 @@ export class DroneGoMap {
     zones: true,
     airspace: true,
     toal: true,
+    propertyRestrictions: true,
+    sssi: true,
   };
 
   constructor(private containerId: string) {
     this.zonesLayer = L.layerGroup();
     this.airspaceLayer = L.layerGroup();
     this.toalLayer = L.layerGroup();
+    this.propertyRestrictionsLayer = L.layerGroup();
+    this.sssiLayer = L.layerGroup();
     this.statusIndicator = new RestrictionStatusIndicator(containerId);
   }
 
@@ -72,10 +78,15 @@ export class DroneGoMap {
       maxZoom: 19,
     }).addTo(this.map);
 
+    // Create custom panes for layering (T034)
+    this.createCustomPanes();
+
     // Add layers to map
     this.zonesLayer.addTo(this.map);
     this.airspaceLayer.addTo(this.map);
     this.toalLayer.addTo(this.map);
+    this.propertyRestrictionsLayer.addTo(this.map);
+    this.sssiLayer.addTo(this.map);
 
     // If we have user location, show marker and auto-check
     if (hasUserLocation) {
@@ -118,7 +129,7 @@ export class DroneGoMap {
     };
 
     try {
-      // Load zones, airspace, and TOAL sites in parallel
+      // Load zones, airspace, TOAL sites, and property restrictions in parallel
       const [zonesData, airspaceData, toalData] = await Promise.all([
         apiClient.getZones(boundsCoords),
         apiClient.getAirspace(boundsCoords),
@@ -128,14 +139,18 @@ export class DroneGoMap {
       this.displayZones(zonesData);
       this.displayAirspace(airspaceData);
       this.displayTOAL(toalData);
+      
+      // Load property restrictions (T034)
+      await this.displayPropertyRestrictions();
 
       console.log(
         `Loaded ${zonesData.metadata?.result_count || 0} zones, ` +
         `${airspaceData.metadata?.result_count || 0} airspace, ` +
         `${toalData.metadata?.result_count || 0} TOAL sites`
       );
+      console.log('🗺️ All map data loaded successfully');
     } catch (error) {
-      console.error('Failed to load map data:', error);
+      console.error('❌ Failed to load map data:', error);
     }
   }
 
@@ -147,8 +162,11 @@ export class DroneGoMap {
     this.zonesLayer.clearLayers();
 
     if (!data.features || data.features.length === 0) {
+      console.log('⚠️ No zone features to display');
       return;
     }
+
+    console.log(`📍 Rendering ${data.features.length} zone features...`);
 
     // Add each zone to the map
     data.features.forEach((feature: any) => {
@@ -187,8 +205,9 @@ export class DroneGoMap {
         style.weight = 3; // Thicker border for emphasis
       }
 
-      // Create GeoJSON layer
+      // Create GeoJSON layer (T034: assign to airspaceRestrictionsPane)
       const geoJsonLayer = L.geoJSON(feature, {
+        pane: 'airspaceRestrictionsPane',
         style: style,
       });
 
@@ -228,6 +247,8 @@ export class DroneGoMap {
       // Add to layer
       geoJsonLayer.addTo(this.zonesLayer);
     });
+    
+    console.log(`✅ Added ${data.features.length} zone features to zonesLayer (pane: airspaceRestrictionsPane)`);
   }
 
   /**
@@ -238,8 +259,11 @@ export class DroneGoMap {
     this.airspaceLayer.clearLayers();
 
     if (!data.features || data.features.length === 0) {
+      console.log('⚠️ No airspace features to display');
       return;
     }
+
+    console.log(`✈️ Rendering ${data.features.length} airspace features...`);
 
     // Add each airspace to the map
     data.features.forEach((feature: any) => {
@@ -258,8 +282,9 @@ export class DroneGoMap {
 
       const color = colors[icaoClass] || '#94a3b8'; // Gray default
 
-      // Create GeoJSON layer with dashed border
+      // Create GeoJSON layer with dashed border (T034: assign to airspaceRestrictionsPane)
       const geoJsonLayer = L.geoJSON(feature, {
+        pane: 'airspaceRestrictionsPane',
         style: {
           color: color,
           fillColor: color,
@@ -306,6 +331,8 @@ export class DroneGoMap {
       // Add to layer
       geoJsonLayer.addTo(this.airspaceLayer);
     });
+    
+    console.log(`✅ Added ${data.features.length} airspace features to airspaceLayer (pane: airspaceRestrictionsPane)`);
   }
 
   /**
@@ -329,7 +356,7 @@ export class DroneGoMap {
       const marker = L.marker([lat, lng], { icon });
 
       // Add click handler to show both TOAL AND location check info
-      marker.on('click', async (e: L.LeafletMouseEvent) => {
+      marker.on('click', async (_e: L.LeafletMouseEvent) => {
         try {
           // Fetch location check data
           const locationResult = await apiClient.checkLocation(lat, lng);
@@ -518,8 +545,8 @@ export class DroneGoMap {
   private createCombinedTOALPopup(
     toalProps: any, 
     locationResult: any, 
-    lat: number, 
-    lng: number
+    _lat: number, 
+    _lng: number
   ): string {
     const badge = toalProps.confidence_badge;
     
@@ -853,6 +880,235 @@ export class DroneGoMap {
   }
 
   /**
+   * Create custom Leaflet panes for layering (T034)
+   * - Property restrictions pane (z-index 410) below airspace
+   * - SSSI pane (z-index 415) above property restrictions
+   * - Airspace restrictions pane (z-index 420) on top
+   */
+  private createCustomPanes(): void {
+    if (!this.map) return;
+
+    // Property restrictions pane (heritage sites, etc.)
+    if (!this.map.getPane('propertyRestrictionsPane')) {
+      const propertyPane = this.map.createPane('propertyRestrictionsPane');
+      propertyPane.style.zIndex = '410';
+      console.log('✅ Created propertyRestrictionsPane with z-index 410');
+    }
+
+    // SSSI pane (legally protected areas) - above heritage sites
+    if (!this.map.getPane('sssiPane')) {
+      const sssiPane = this.map.createPane('sssiPane');
+      sssiPane.style.zIndex = '415';
+      console.log('✅ Created sssiPane with z-index 415');
+    }
+
+    // Airspace restrictions pane (controlled airspace, no-fly zones)
+    if (!this.map.getPane('airspaceRestrictionsPane')) {
+      const airspacePane = this.map.createPane('airspaceRestrictionsPane');
+      airspacePane.style.zIndex = '420';
+      console.log('✅ Created airspaceRestrictionsPane with z-index 420');
+    }
+  }
+
+  /**
+   * Display property restrictions (heritage sites and SSSI) on the map (T034)
+   */
+  private async displayPropertyRestrictions(): Promise<void> {
+    await this.displayPropertyRestrictionsByCategory('HERITAGE_SITE');
+    await this.displayPropertyRestrictionsByCategory('SSSI');
+  }
+
+  /**
+   * Display property restrictions of a specific category
+   */
+  private async displayPropertyRestrictionsByCategory(category: string): Promise<void> {
+    if (!this.map) return;
+
+    const bounds = this.map.getBounds();
+    const boundsCoords = {
+      minLon: bounds.getWest(),
+      minLat: bounds.getSouth(),
+      maxLon: bounds.getEast(),
+      maxLat: bounds.getNorth(),
+    };
+
+    const isSSSI = category === 'SSSI';
+    const targetLayer = isSSSI ? this.sssiLayer : this.propertyRestrictionsLayer;
+    const targetPane = isSSSI ? 'sssiPane' : 'propertyRestrictionsPane';
+
+    try {
+      const collection = await apiClient.getPropertyRestrictions(boundsCoords, category);
+
+      // Clear existing restrictions for this category
+      targetLayer.clearLayers();
+
+      if (!collection.features || collection.features.length === 0) {
+        console.log(`⚠️ No ${category} features to display`);
+        return;
+      }
+
+      console.log(`🏛️ Rendering ${collection.features.length} ${category} features...`);
+
+      // Add each property restriction to the map
+      collection.features.forEach((feature) => {
+        const props = feature.properties;
+
+        // Style based on category: SSSI = red (no-fly), Heritage = amber (advisory)
+        const style = isSSSI
+          ? {
+              fillColor: '#DC2626',      // Red for SSSI (legally protected)
+              fillOpacity: 0.35,
+              color: '#991B1B',          // Darker red border
+              weight: 2,
+              dashArray: undefined,      // Solid line for legally protected
+            }
+          : {
+              fillColor: '#FFA500',      // Amber for heritage (advisory)
+              fillOpacity: 0.3,
+              color: '#FF8C00',          // Darker amber border
+              weight: 2,
+              dashArray: '5, 5',         // Dashed line for advisory
+            };
+
+        // Create GeoJSON layer
+        const geoJsonLayer = L.geoJSON(feature, {
+          pane: targetPane,
+          style,
+        });
+
+        // Add click handler to show property details
+        geoJsonLayer.on('click', async (e: L.LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+
+          try {
+            // Fetch location check data
+            const locationResult = await apiClient.checkLocation(e.latlng.lat, e.latlng.lng);
+
+            // Create combined popup with property AND flight permission info
+            const popup = this.createCombinedPropertyPopup(
+              props,
+              locationResult,
+              e.latlng.lat,
+              e.latlng.lng
+            );
+
+            // Show popup at click location
+            L.popup()
+              .setLatLng(e.latlng)
+              .setContent(popup)
+              .openOn(this.map!);
+
+          } catch (error) {
+            console.error('Failed to check location:', error);
+            // Fallback to just property info
+            const popup = this.createPropertyPopup(props);
+            L.popup()
+              .setLatLng(e.latlng)
+              .setContent(popup)
+              .openOn(this.map!);
+          }
+        });
+
+        // Add to appropriate layer
+        geoJsonLayer.addTo(targetLayer);
+      });
+      
+      console.log(`✅ Added ${collection.features.length} ${category} features to ${targetPane}`);
+
+    } catch (error) {
+      console.error(`Failed to load ${category} restrictions:`, error);
+    }
+  }
+
+  /**
+   * Create popup content for a property restriction
+   */
+  private createPropertyPopup(properties: any): string {
+    return `
+      <div style="min-width: 280px; font-family: system-ui, sans-serif;">
+        <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f2937;">
+          ${properties.property_name}
+        </h3>
+        <div style="background: #FFA500; color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; font-size: 12px;">
+          🏛️ Heritage Site
+        </div>
+        <table style="width: 100%; font-size: 12px;">
+          <tr>
+            <td style="padding: 4px 0; color: #666;"><strong>Organization:</strong></td>
+            <td style="padding: 4px 0;">${properties.organization}</td>
+          </tr>
+          ${properties.policy_text ? `
+            <tr>
+              <td colspan="2" style="padding: 8px; background: #fef3c7; border-radius: 4px; margin-top: 8px; font-size: 11px; color: #92400e;">
+                <strong>Policy:</strong><br/>
+                ${properties.policy_text.substring(0, 200)}${properties.policy_text.length > 200 ? '...' : ''}
+              </td>
+            </tr>
+          ` : ''}
+          ${properties.contact_info ? `
+            <tr>
+              <td style="padding: 4px 0; color: #666;"><strong>Contact:</strong></td>
+              <td style="padding: 4px 0;">${properties.contact_info}</td>
+            </tr>
+          ` : ''}
+          ${properties.policy_effective_date ? `
+            <tr>
+              <td style="padding: 4px 0; color: #666;"><strong>Effective:</strong></td>
+              <td style="padding: 4px 0;">${new Date(properties.policy_effective_date).toLocaleDateString()}</td>
+            </tr>
+          ` : ''}
+        </table>
+      </div>
+    `;
+  }
+
+  /**
+   * Create combined popup for property restriction with flight status
+   */
+  private createCombinedPropertyPopup(
+    properties: any,
+    locationResult: any,
+    lat: number,
+    lng: number
+  ): string {
+    // Create property info section
+    const propertySection = `
+      <div style="background: #FFA500; color: white; padding: 8px 12px; margin: -12px -12px 12px -12px; border-radius: 8px 8px 0 0;">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 600;">
+          🏛️ ${properties.property_name}
+        </h3>
+        <div style="font-size: 11px; margin-top: 4px; opacity: 0.9;">
+          ${properties.organization}
+        </div>
+      </div>
+      
+      ${properties.policy_text ? `
+        <div style="background: #fef3c7; padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 11px; color: #92400e;">
+          <strong>Policy:</strong><br/>
+          ${properties.policy_text.substring(0, 200)}${properties.policy_text.length > 200 ? '...' : ''}
+        </div>
+      ` : ''}
+      
+      ${properties.contact_info ? `
+        <div style="font-size: 11px; color: #666; margin-bottom: 12px;">
+          <strong>Contact:</strong> ${properties.contact_info}
+        </div>
+      ` : ''}
+    `;
+
+    // Create flight status section
+    const flightSection = this.createLocationCheckPopup(locationResult, lat, lng);
+
+    return `
+      <div style="min-width: 320px; font-family: system-ui, sans-serif;">
+        ${propertySection}
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;" />
+        ${flightSection}
+      </div>
+    `;
+  }
+
+  /**
    * Check flight permission at specific coordinates
    */
   private async checkLocation(lat: number, lng: number): Promise<void> {
@@ -905,10 +1161,59 @@ export class DroneGoMap {
   /**
    * Create popup content for location check result
    */
-  private createLocationCheckPopup(result: any, lat: number, lng: number): string {
-    const statusColor = result.can_fly ? '#16a34a' : '#dc2626';
-    const statusIcon = result.can_fly ? '✓' : '✗';
-    const statusText = result.can_fly ? 'YOU CAN FLY HERE' : 'NO FLIGHT PERMITTED';
+  private createLocationCheckPopup(result: any, _lat: number, _lng: number): string {
+    // Tri-state logic (T038)
+    let statusColor: string;
+    let statusIcon: string;
+    let statusText: string;
+
+    if (result.flight_status === 'prohibited') {
+      statusColor = '#dc2626';
+      statusIcon = '🚫';
+      statusText = 'NO FLIGHT PERMITTED';
+    } else if (result.flight_status === 'check-property-restrictions') {
+      statusColor = '#f59e0b';
+      statusIcon = '⚠️';
+      statusText = 'CHECK PROPERTY POLICY';
+    } else if (result.flight_status === 'permitted') {
+      statusColor = '#16a34a';
+      statusIcon = '✓';
+      statusText = 'FLIGHT PERMITTED';
+    } else {
+      // Legacy logic
+      statusColor = result.can_fly ? '#16a34a' : '#dc2626';
+      statusIcon = result.can_fly ? '✓' : '✗';
+      statusText = result.can_fly ? 'YOU CAN FLY HERE' : 'NO FLIGHT PERMITTED';
+    }
+
+    // Property restrictions section (T038)
+    let propertyHtml = '';
+    if (result.property_restrictions && result.property_restrictions.length > 0) {
+      const count = result.property_restrictions.length;
+      propertyHtml = `
+        <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+          <strong style="color: #92400e; font-size: 12px;">🏛️ HERITAGE SITES (${count}):</strong>
+          <div style="margin-top: 8px; max-height: 150px; overflow-y: auto;">
+            ${result.property_restrictions.map((prop: any) => `
+              <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px; font-size: 11px;">
+                <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
+                <div style="color: #666; margin-top: 2px;">${prop.organization}</div>
+                ${prop.policy_summary ? `
+                  <div style="margin-top: 4px; font-style: italic; color: #4b5563;">
+                    ${prop.policy_summary}
+                  </div>
+                ` : ''}
+                ${prop.contact ? `
+                  <div style="margin-top: 4px; color: #666;">
+                    <strong>Contact:</strong> ${prop.contact}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
     let zonesHtml = '';
     if (result.zones && result.zones.length > 0) {
@@ -940,19 +1245,30 @@ export class DroneGoMap {
       `;
     }
 
+    // Status description
+    let statusDescription = '';
+    if (result.flight_status) {
+      if (result.flight_status === 'prohibited') {
+        statusDescription = 'Airspace restrictions prevent flight at this location.';
+      } else if (result.flight_status === 'check-property-restrictions') {
+        statusDescription = 'Heritage site restrictions may apply. Contact property managers.';
+      } else if (result.flight_status === 'permitted') {
+        statusDescription = 'No restrictions detected. Fly safely!';
+      }
+    } else {
+      statusDescription = this.formatStatus(result.restriction_status);
+    }
+
     return `
       <div style="min-width: 300px; font-family: system-ui, sans-serif;">
         <div style="background: ${statusColor}; color: white; padding: 12px; margin: -8px -8px 12px -8px; border-radius: 4px 4px 0 0;">
           <div style="font-size: 24px; margin-bottom: 4px;">${statusIcon}</div>
           <div style="font-weight: 600; font-size: 13px;">${statusText}</div>
         </div>
-        <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
-          📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}
-        </div>
-        <table style="width: 100%; font-size: 12px;">
+        <table style="width: 100%; font-size: 12px; margin-bottom: 8px;">
           <tr>
             <td style="padding: 4px 0; color: #666;"><strong>Status:</strong></td>
-            <td style="padding: 4px 0;">${this.formatStatus(result.restriction_status)}</td>
+            <td style="padding: 4px 0;">${statusDescription}</td>
           </tr>
           ${result.authorization_required ? `
             <tr>
@@ -964,6 +1280,7 @@ export class DroneGoMap {
             </tr>
           ` : ''}
         </table>
+        ${propertyHtml}
         ${zonesHtml}
         ${toalHtml}
       </div>
@@ -1201,8 +1518,13 @@ export class DroneGoMap {
     try {
       const result = await apiClient.checkLocation(lat, lng);
       
-      // Show status indicator
+      // Show status indicator with tri-state support (T037)
       this.statusIndicator.show({
+        flightStatus: result.flight_status,
+        airspaceClear: result.airspace_clear,
+        propertyAdvisory: result.property_advisory,
+        propertyRestrictions: result.property_restrictions,
+        // Legacy fields for backward compatibility
         canFly: result.can_fly,
         restrictionStatus: result.restriction_status,
         authorizationRequired: result.authorization_required,
@@ -1308,7 +1630,13 @@ export class DroneGoMap {
             // Re-check restrictions
             try {
               const result = await apiClient.checkLocation(this.userLocation.lat, this.userLocation.lng);
+              // Show status indicator with tri-state support (T037)
               this.statusIndicator.show({
+                flightStatus: result.flight_status,
+                airspaceClear: result.airspace_clear,
+                propertyAdvisory: result.property_advisory,
+                propertyRestrictions: result.property_restrictions,
+                // Legacy fields for backward compatibility
                 canFly: result.can_fly,
                 restrictionStatus: result.restriction_status,
                 authorizationRequired: result.authorization_required,
@@ -1419,6 +1747,14 @@ export class DroneGoMap {
           <input type="checkbox" id="toggle-toal" checked style="width: 16px; height: 16px; cursor: pointer;">
           <span>🎯 TOAL Sites</span>
         </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="toggle-property-restrictions" checked style="width: 16px; height: 16px; cursor: pointer;">
+          <span>🏛️ Heritage Sites</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="toggle-sssi" checked style="width: 16px; height: 16px; cursor: pointer;">
+          <span>🦋 SSSI Protected</span>
+        </label>
       </div>
     `;
 
@@ -1454,6 +1790,36 @@ export class DroneGoMap {
         this.map?.removeLayer(this.toalLayer);
       }
     };
+
+    // Property restrictions (heritage sites) toggle handler (T035)
+    const propertyCheckbox = panel.querySelector('#toggle-property-restrictions') as HTMLInputElement;
+    propertyCheckbox.onchange = () => {
+      this.layersEnabled.propertyRestrictions = propertyCheckbox.checked;
+      if (propertyCheckbox.checked) {
+        this.map?.addLayer(this.propertyRestrictionsLayer);
+      } else {
+        this.map?.removeLayer(this.propertyRestrictionsLayer);
+      }
+    };
+
+    // SSSI toggle handler
+    const sssiCheckbox = panel.querySelector('#toggle-sssi') as HTMLInputElement;
+    sssiCheckbox.onchange = () => {
+      this.layersEnabled.sssi = sssiCheckbox.checked;
+      if (sssiCheckbox.checked) {
+        this.map?.addLayer(this.sssiLayer);
+      } else {
+        this.map?.removeLayer(this.sssiLayer);
+      }
+    };
+
+    // Prevent click-through to map (fix for checkbox clicks triggering map location checks)
+    panel.addEventListener('click', (e: MouseEvent) => {
+      e.stopPropagation();
+    });
+    panel.addEventListener('dblclick', (e: MouseEvent) => {
+      e.stopPropagation();
+    });
 
     const container = document.getElementById(this.containerId);
     container?.appendChild(panel);

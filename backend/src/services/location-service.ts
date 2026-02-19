@@ -1,16 +1,24 @@
 import { GeospatialService, type ZoneResult, type ToalSiteResult } from './geospatial-service.js';
 import { Location } from '../models/Location.js';
+import { PropertyService } from './property-service.js';
 
 /**
- * Location Check Service
+ * Location Check Service (User Story 1 - Tri-State Integration)
  * 
- * Determines whether a pilot can fly at a given location by checking
- * restriction zones, applying zone priority hierarchy, and providing
- * TOAL site proximity information.
+ * Determines whether a pilot can fly at a given location by checking:
+ * 1. Airspace restrictions (restriction zones with priority hierarchy)
+ * 2. Property restrictions (heritage sites, private properties)
+ * 3. TOAL site proximity information
  * 
  * SAFETY CRITICAL: This service determines flight legality. Incorrect
  * status determination could lead to illegal flights in restricted
- * airspace, potentially causing safety incidents or legal consequences.
+ * airspace or unauthorized flights over heritage sites, potentially
+ * causing safety incidents, legal consequences, or property violations.
+ * 
+ * Tri-State Logic (User Story 1):
+ * - State 1: Airspace restricted → 'prohibited' (property ignored)
+ * - State 2: Airspace clear + property restricted → 'check-property-restrictions'
+ * - State 3: Both clear → 'permitted'
  * 
  * Uses Location.determineStatus for zone priority hierarchy:
  * no-fly > airport-frz > military > controlled > danger > temporary
@@ -19,29 +27,46 @@ import { Location } from '../models/Location.js';
  * - All spatial queries must complete within 5 seconds (FR-026)
  * - Must handle temporal filtering (expired zones excluded)
  * - Must validate input coordinates
+ * - Property restrictions must be accurately detected (safety-critical)
  * 
  * @see Location.determineStatus for zone priority logic
  * @see GeospatialService for spatial queries
+ * @see PropertyService for heritage site queries
  */
 
 /**
- * Result of a location check query
+ * Property advisory information (User Story 1)
+ */
+export interface PropertyAdvisory {
+  property_name: string;
+  organization: string;
+  policy_summary: string; // Truncated to 200 chars
+  contact: string;
+}
+
+/**
+ * Result of a location check query (User Story 1 - Tri-State)
  */
 export interface LocationCheckResult {
   /**
-   * Overall restriction status at this location
-   * - 'no-fly': Flight prohibited
-   * - 'controlled': Flight requires authorization
-   * - 'permitted': Flight allowed without special authorization
+   * Tri-state flight status (User Story 1)
+   * - 'prohibited': Airspace restricted, flight not allowed
+   * - 'check-property-restrictions': Airspace clear but property restrictions apply
+   * - 'permitted': Both airspace and property clear
    */
-  restriction_status: 'no-fly' | 'controlled' | 'permitted';
+  flight_status: 'prohibited' | 'check-property-restrictions' | 'permitted';
 
   /**
-   * Simple boolean: can the pilot fly here?
-   * - false for 'no-fly' and 'controlled'
-   * - true for 'permitted'
+   * Is airspace clear of restrictions?
+   * true = no airspace zones, false = airspace restricted
    */
-  can_fly: boolean;
+  airspace_clear: boolean;
+
+  /**
+   * Are there property restrictions at this location?
+   * true = property restrictions exist, false = no property restrictions
+   */
+  property_advisory: boolean;
 
   /**
    * All restriction zones containing this location
@@ -50,31 +75,61 @@ export interface LocationCheckResult {
   zones: ZoneResult[];
 
   /**
+   * Property restrictions at this location (User Story 1)
+   * Empty array if airspace restricted (State 1) or no properties (State 3)
+   * Populated if State 2 (check-property-restrictions)
+   */
+  property_restrictions: PropertyAdvisory[];
+
+  /**
    * Nearest TOAL (Take-Off And Landing) site
    * null if no TOAL sites in database
    */
   nearest_toal: ToalSiteResult | null;
 
   /**
-   * Does this location require authorization?
-   * true for 'controlled' status, false otherwise
+   * Human-readable message describing flight status
    */
-  authorization_required: boolean;
+  message?: string;
+
+  // DEPRECATED: Legacy fields for backward compatibility
+  // These will be removed in future versions
+  /**
+   * @deprecated Use flight_status instead
+   */
+  restriction_status?: 'no-fly' | 'controlled' | 'permitted';
+
+  /**
+   * @deprecated Use flight_status === 'permitted' instead
+   */
+  can_fly?: boolean;
+
+  /**
+   * @deprecated Use property_restrictions.length > 0 instead
+   */
+  authorization_required?: boolean;
 }
 
 export class LocationService {
   private geospatialService: GeospatialService;
+  private propertyService: PropertyService;
 
   constructor() {
     this.geospatialService = new GeospatialService();
+    this.propertyService = new PropertyService();
   }
 
   /**
-   * Check if a location is safe and legal for drone flight
+   * Check if a location is safe and legal for drone flight (User Story 1 - Tri-State)
+   * 
+   * Implements tri-state logic:
+   * 1. Check airspace restrictions (zones)
+   * 2. If airspace clear, check property restrictions (heritage sites)
+   * 3. Return appropriate status and advisories
    * 
    * @param lng Longitude in decimal degrees (WGS84, -180 to 180)
    * @param lat Latitude in decimal degrees (WGS84, -90 to 90)
-   * @returns Location check result with restriction status and zones
+   * @returns Location check result with tri-state flight status
    * 
    * @throws Error if coordinates are invalid
    * @throws Error if database query fails
@@ -84,12 +139,12 @@ export class LocationService {
    * const service = new LocationService();
    * const result = await service.checkLocation(-0.1278, 51.5074);
    * 
-   * if (result.can_fly) {
+   * if (result.flight_status === 'permitted') {
    *   console.log('Flight permitted at this location');
-   * } else if (result.authorization_required) {
-   *   console.log('Authorization required to fly here');
+   * } else if (result.flight_status === 'check-property-restrictions') {
+   *   console.log('Check property policies:', result.property_restrictions);
    * } else {
-   *   console.log('No-fly zone - flight prohibited');
+   *   console.log('Airspace restricted - flight prohibited');
    * }
    * ```
    */
@@ -98,31 +153,59 @@ export class LocationService {
       // Validate coordinates
       this.geospatialService.validateCoordinates(lng, lat);
 
-      // Query zones containing this point (GeospatialService handles temporal filtering)
+      // Step 1: Query airspace zones (GeospatialService handles temporal filtering)
       const zones = await this.geospatialService.findZonesContainingPoint(lng, lat);
 
-      // Query nearest TOAL site
+      // Step 2: Query nearest TOAL site
       const nearestToal = await this.geospatialService.findNearestToalSite(lng, lat);
 
-      // Determine restriction status using Location.determineStatus
-      // This applies the zone priority hierarchy (no-fly > airport-frz > military > controlled > danger > temporary)
+      // Step 3: Check if airspace is restricted
+      const airspaceRestricted = zones.length > 0;
+
+      // Step 4: Query property restrictions (only if airspace clear - optimization)
+      let properties: any[] = [];
+      if (!airspaceRestricted) {
+        properties = await this.propertyService.checkPropertyRestrictions(lng, lat);
+      }
+
+      const propertyRestricted = properties.length > 0;
+
+      // Step 5: Tri-State Logic (User Story 1)
+      let flight_status: 'prohibited' | 'check-property-restrictions' | 'permitted';
+      let property_restrictions: PropertyAdvisory[] = [];
+      let message: string;
+
+      if (airspaceRestricted) {
+        // State 1: Airspace Restricted → Prohibited
+        flight_status = 'prohibited';
+        message = 'Flight prohibited due to airspace restrictions.';
+        property_restrictions = []; // Not populated when airspace restricted
+      } else if (propertyRestricted) {
+        // State 2: Airspace Clear + Property Restricted → Check Property Restrictions
+        flight_status = 'check-property-restrictions';
+        message = 'Airspace clear, but property restrictions may apply. Check property policies below.';
+        
+        // Format property advisories (truncate policy to 200 chars)
+        property_restrictions = this.propertyService.formatPropertyAdvisories(properties);
+      } else {
+        // State 3: Both Clear → Permitted
+        flight_status = 'permitted';
+        message = 'Flight permitted. No airspace or property restrictions detected.';
+        property_restrictions = [];
+      }
+
+      // Step 6: Populate legacy fields for backward compatibility
       let restrictionStatus: 'no-fly' | 'controlled' | 'permitted';
       let authorizationRequired = false;
 
-      if (zones.length === 0) {
-        // No zones = permitted
-        restrictionStatus = 'permitted';
-      } else {
-        // Use Location.determineStatus to apply hierarchy
-        // Note: Location.determineStatus expects coordinates and zones
+      if (airspaceRestricted && zones.length > 0) {
+        // Use Location.determineStatus to apply zone priority hierarchy
         const status = Location.determineStatus(
           { lng, lat },
           zones.map((z) => ({ zone_type: z.zone_type }))
         );
 
-        // Map Location model status to API status
-        // Location returns: 'prohibited' | 'authorization-required' | 'permitted'
-        // API expects: 'no-fly' | 'controlled' | 'permitted'
+        // Map Location model status to legacy API status
         if (status === 'prohibited') {
           restrictionStatus = 'no-fly';
         } else if (status === 'authorization-required') {
@@ -131,15 +214,25 @@ export class LocationService {
         } else {
           restrictionStatus = 'permitted';
         }
+      } else {
+        restrictionStatus = 'permitted';
       }
 
-      const canFly = restrictionStatus === 'permitted';
+      const canFly = flight_status === 'permitted';
 
       return {
+        // User Story 1 tri-state fields
+        flight_status,
+        airspace_clear: !airspaceRestricted,
+        property_advisory: propertyRestricted,
+        zones,
+        property_restrictions,
+        nearest_toal: nearestToal,
+        message,
+
+        // Legacy fields for backward compatibility
         restriction_status: restrictionStatus,
         can_fly: canFly,
-        zones,
-        nearest_toal: nearestToal,
         authorization_required: authorizationRequired,
       };
     } catch (error) {

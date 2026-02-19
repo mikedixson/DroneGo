@@ -346,3 +346,223 @@ describe('RestrictionStatusIndicator - SAFETY CRITICAL', () => {
     });
   });
 });
+
+/**
+ * T021: Tri-State Display Tests (User Story 1)
+ * 
+ * Tests tri-state flight status display for property restrictions:
+ * - Red indicator: flight_status='prohibited' (airspace restricted)
+ * - Green indicator: flight_status='permitted' (both clear)
+ * - Amber indicator: flight_status='check-property-restrictions' (property advisory)
+ * 
+ * Verifies correct colors, messages, and property advisory details.
+ */
+describe('RestrictionStatusIndicator - Tri-State Display (User Story 1)', () => {
+  let container: HTMLElement;
+  let indicator: RestrictionStatusIndicator;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'status-indicator-tristate';
+    document.body.appendChild(container);
+
+    indicator = new RestrictionStatusIndicator('status-indicator-tristate');
+  });
+
+  afterEach(() => {
+    if (container && container.parentNode) {
+      document.body.removeChild(container);
+    }
+    vi.restoreAllMocks();
+  });
+
+  describe('State 1: Prohibited (Red)', () => {
+    it('should display red indicator for flight_status="prohibited"', () => {
+      const config = {
+        flight_status: 'prohibited',
+        airspace_clear: false,
+        property_advisory: false,
+        zones: [{ zone_id: '1', zone_type: 'no-fly', restriction_name: 'Test No-Fly' }],
+        property_restrictions: [],
+        message: 'Flight prohibited due to airspace restrictions',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement).not.toBeNull();
+      
+      // Should have red indicator class/styling
+      expect(statusElement?.classList.contains('status-prohibited') || 
+             statusElement?.classList.contains('status-red')).toBe(true);
+      
+      expect(statusElement?.textContent).toContain('prohibited');
+      expect(statusElement?.textContent).toMatch(/no.*fly|prohibited|restricted/i);
+    });
+
+    it('should display "No Flight Permitted" message for prohibited status', () => {
+      const config = {
+        flight_status: 'prohibited',
+        airspace_clear: false,
+        property_advisory: false,
+        zones: [{ zone_id: '1', zone_type: 'no-fly', restriction_name: 'Test Zone' }],
+        property_restrictions: [],
+        message: 'Flight prohibited',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement?.textContent).toMatch(/No.*Flight.*Permitted|Flight.*Prohibited/i);
+    });
+  });
+
+  describe('State 2: Check Property Restrictions (Amber)', () => {
+    it('should display amber indicator for flight_status="check-property-restrictions"', () => {
+      const config = {
+        flight_status: 'check-property-restrictions',
+        airspace_clear: true,
+        property_advisory: true,
+        zones: [],
+        property_restrictions: [
+          { property_name: 'Stonehenge', organization: 'English Heritage Trust', policy_summary: 'Authorization required', contact: 'permissions@english-heritage.org.uk' }
+        ],
+        message: 'Airspace clear, but property restrictions may apply',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement).not.toBeNull();
+      
+      // Should have amber indicator class/styling
+      expect(statusElement?.classList.contains('status-check-property') || 
+             statusElement?.classList.contains('status-amber') ||
+             statusElement?.classList.contains('status-yellow')).toBe(true);
+    });
+
+    it('should display "Check Property Policy" message for property restrictions', () => {
+      const config = {
+        flight_status: 'check-property-restrictions',
+        airspace_clear: true,
+        property_advisory: true,
+        zones: [],
+        property_restrictions: [
+          { property_name: 'Heritage Site', organization: 'Historic England', policy_summary: 'Policy', contact: 'contact@example.com' }
+        ],
+        message: 'Check property policy',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement?.textContent).toMatch(/Check.*Property.*Policy|Property.*Restrictions/i);
+    });
+
+    it('should display property restrictions count when multiple properties', () => {
+      const config = {
+        flight_status: 'check-property-restrictions',
+        airspace_clear: true,
+        property_advisory: true,
+        zones: [],
+        property_restrictions: [
+          { property_name: 'Site 1', organization: 'Org 1', policy_summary: 'Policy 1', contact: 'contact1@example.com' },
+          { property_name: 'Site 2', organization: 'Org 2', policy_summary: 'Policy 2', contact: 'contact2@example.com' },
+          { property_name: 'Site 3', organization: 'Org 3', policy_summary: 'Policy 3', contact: 'contact3@example.com' },
+        ],
+        message: 'Multiple property restrictions detected',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      // Should display count: "3 property restrictions"
+      expect(statusElement?.textContent).toMatch(/3.*propert/i);
+    });
+
+    it('should display property name and organization', () => {
+      const config = {
+        flight_status: 'check-property-restrictions',
+        airspace_clear: true,
+        property_advisory: true,
+        zones: [],
+        property_restrictions: [
+          { 
+            property_name: 'Stonehenge', 
+            organization: 'English Heritage Trust', 
+            policy_summary: 'World Heritage Site. Authorization required.', 
+            contact: 'permissions@english-heritage.org.uk' 
+          }
+        ],
+        message: 'Property restrictions detected',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement?.textContent).toContain('Stonehenge');
+      expect(statusElement?.textContent).toContain('English Heritage Trust');
+    });
+
+    it('should display contact information', () => {
+      const config = {
+        flight_status: 'check-property-restrictions',
+        airspace_clear: true,
+        property_advisory: true,
+        zones: [],
+        property_restrictions: [
+          { 
+            property_name: 'Heritage Site', 
+            organization: 'National Trust', 
+            policy_summary: 'Authorization required', 
+            contact: 'permissions@nationaltrust.org.uk' 
+          }
+        ],
+        message: 'Property restrictions detected',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement?.textContent).toContain('permissions@nationaltrust.org.uk');
+    });
+  });
+
+  describe('State 3: Permitted (Green)', () => {
+    it('should display green indicator for flight_status="permitted"', () => {
+      const config = {
+        flight_status: 'permitted',
+        airspace_clear: true,
+        property_advisory: false,
+        zones: [],
+        property_restrictions: [],
+        message: 'Flight permitted - no restrictions',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement).not.toBeNull();
+      
+      // Should have green indicator class/styling
+      expect(statusElement?.classList.contains('status-permitted') || 
+             statusElement?.classList.contains('status-green')).toBe(true);
+    });
+
+    it('should display "Flight Permitted" message for permitted status', () => {
+      const config = {
+        flight_status: 'permitted',
+        airspace_clear: true,
+        property_advisory: false,
+        zones: [],
+        property_restrictions: [],
+        message: 'Flight permitted',
+      };
+
+      indicator.showTriState(config);
+
+      const statusElement = container.querySelector('#restriction-status-indicator');
+      expect(statusElement?.textContent).toMatch(/Flight.*Permitted|No.*Restrictions/i);
+    });
+  });
+});
