@@ -131,14 +131,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('controlled');
       expect(status.can_fly).toBe(false);
@@ -146,7 +146,7 @@ describe('LocationService - SAFETY CRITICAL', () => {
     });
 
     it('should return "permitted" status for location outside all restricted zones', async () => {
-      // Create zone far away
+      // Create zone in one location
       const result = await pool.query(
         `INSERT INTO restriction_zones (
           zone_type, restriction_name, geometry, authority_source, data_source_id,
@@ -166,7 +166,8 @@ describe('LocationService - SAFETY CRITICAL', () => {
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.13, 51.51);
+      // Test at remote location in mid-Atlantic Ocean (verified zone-free)
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('permitted');
       expect(status.can_fly).toBe(true);
@@ -189,7 +190,7 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
@@ -209,14 +210,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.48, 51.52], [-0.48, 51.58], [-0.42, 51.58], [-0.42, 51.52], [-0.48, 51.52]]],
+            coordinates: [[[-30.8, -0.8], [-30.8, 0.8], [-29.2, 0.8], [-29.2, -0.8], [-30.8, -0.8]]],
           }),
           testDataSourceIds['CAA'],
         ]
       );
       testZoneIds.push(result2.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('no-fly');
       expect(status.can_fly).toBe(false);
@@ -236,7 +237,7 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['MoD'],
         ]
@@ -255,14 +256,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.48, 51.52], [-0.48, 51.58], [-0.42, 51.58], [-0.42, 51.52], [-0.48, 51.52]]],
+            coordinates: [[[-30.8, -0.8], [-30.8, 0.8], [-29.2, 0.8], [-29.2, -0.8], [-30.8, -0.8]]],
           }),
           testDataSourceIds['CAA'],
         ]
       );
       testZoneIds.push(result2.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('no-fly');
       expect(status.can_fly).toBe(false);
@@ -279,11 +280,11 @@ describe('LocationService - SAFETY CRITICAL', () => {
           'Test TOAL', ST_SetSRID(ST_MakePoint($1, $2), 4326),
           'public', true, 'test'
         ) RETURNING site_id`,
-        [-0.1278, 51.5074]
+        [-30.01, 0.01] // Nearby test location
       );
       testToalIds.push(result.rows[0].site_id);
 
-      const status = await service.checkLocation(-0.13, 51.51);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.nearest_toal).toBeDefined();
       expect(status.nearest_toal?.site_id).toBe(result.rows[0].site_id);
@@ -293,7 +294,7 @@ describe('LocationService - SAFETY CRITICAL', () => {
     it('should handle no TOAL sites available', async () => {
       await pool.query('DELETE FROM toal_sites');
 
-      const status = await service.checkLocation(-0.13, 51.51);
+      const status = await service.checkLocation(-30.0, 0.0); // Remote test location
 
       expect(status.nearest_toal).toBeNull();
     });
@@ -315,14 +316,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('permitted');
       expect(status.zones.length).toBe(0);
@@ -343,14 +344,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.restriction_status).toBe('no-fly');
       expect(status.zones.length).toBe(1);
@@ -371,14 +372,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.zones[0].altitude_floor).toBe(1000);
       expect(status.zones[0].altitude_ceiling).toBe(3000);
@@ -419,14 +420,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.authorization_required).toBe(true);
       expect(status.zones[0].authorization_possible).toBe(true);
@@ -445,14 +446,14 @@ describe('LocationService - SAFETY CRITICAL', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-31.0, -1.0], [-31.0, 1.0], [-29.0, 1.0], [-29.0, -1.0], [-31.0, -1.0]]],
           }),
           testDataSourceIds['CAA'],
         ]
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const status = await service.checkLocation(-0.45, 51.55);
+      const status = await service.checkLocation(-30.0, 0.0);
 
       expect(status.authorization_required).toBe(false);
     });
@@ -478,11 +479,11 @@ describe('LocationService - SAFETY CRITICAL', () => {
               type: 'Polygon',
               coordinates: [
                 [
-                  [-0.5 + offset, 51.5 + offset],
-                  [-0.5 + offset, 51.6 + offset],
-                  [-0.4 + offset, 51.6 + offset],
-                  [-0.4 + offset, 51.5 + offset],
-                  [-0.5 + offset, 51.5 + offset],
+                  [-31.0 + offset, -1.0 + offset],
+                  [-31.0 + offset, 1.0 + offset],
+                  [-29.0 + offset, 1.0 + offset],
+                  [-29.0 + offset, -1.0 + offset],
+                  [-31.0 + offset, -1.0 + offset],
                 ],
               ],
             }),
@@ -493,7 +494,7 @@ describe('LocationService - SAFETY CRITICAL', () => {
       }
 
       const startTime = Date.now();
-      await service.checkLocation(-0.45, 51.55);
+      await service.checkLocation(-30.0, 0.0);
       const duration = Date.now() - startTime;
 
       expect(duration).toBeLessThan(5000);
@@ -577,11 +578,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -605,11 +606,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -618,7 +619,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.flight_status).toBe('prohibited');
       expect(result.airspace_clear).toBe(false);
@@ -642,11 +643,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -655,7 +656,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testZoneIds.push(zoneResult.rows[0].zone_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.flight_status).toBe('prohibited');
       expect(result.airspace_clear).toBe(false);
@@ -680,11 +681,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -693,7 +694,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.flight_status).toBe('check-property-restrictions');
       expect(result.airspace_clear).toBe(true);
@@ -707,7 +708,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
         `INSERT INTO property_restrictions (
           property_name, managing_organization, geometry, policy_text, contact_info, data_source_id
         ) VALUES (
-          'Stonehenge', 'English Heritage Trust',
+          'Test Stonehenge', 'English Heritage Trust',
           ST_Multi(ST_GeomFromGeoJSON($1)),
           'This is a World Heritage Site. Drone flights require prior written authorization from English Heritage. Unauthorized flights may result in prosecution.',
           'permissions@english-heritage.org.uk',
@@ -718,11 +719,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -731,7 +732,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.property_restrictions.length).toBe(1);
 
@@ -741,7 +742,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       expect(advisory).toHaveProperty('policy_summary');
       expect(advisory).toHaveProperty('contact');
 
-      expect(advisory.property_name).toBe('Stonehenge');
+      expect(advisory.property_name).toBe('Test Stonehenge');
       expect(advisory.organization).toBe('English Heritage Trust');
       expect(advisory.policy_summary).toContain('authorization');
       expect(advisory.contact).toBe('permissions@english-heritage.org.uk');
@@ -753,7 +754,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
         `INSERT INTO property_restrictions (
           property_name, managing_organization, geometry, policy_text, data_source_id
         ) VALUES (
-          'Heritage Site 1', 'Organization A',
+          'Test Heritage Site 1', 'Organization A',
           ST_Multi(ST_GeomFromGeoJSON($1)),
           'Policy A',
           $2
@@ -763,11 +764,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.15, 51.49],
-                [-0.15, 51.53],
-                [-0.11, 51.53],
-                [-0.11, 51.49],
-                [-0.15, 51.49],
+                [-30.10, -0.10],
+                [-30.10, 0.10],
+                [-29.90, 0.10],
+                [-29.90, -0.10],
+                [-30.10, -0.10],
               ],
             ],
           }),
@@ -780,7 +781,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
         `INSERT INTO property_restrictions (
           property_name, managing_organization, geometry, policy_text, data_source_id
         ) VALUES (
-          'Heritage Site 2', 'Organization B',
+          'Test Heritage Site 2', 'Organization B',
           ST_Multi(ST_GeomFromGeoJSON($1)),
           'Policy B',
           $2
@@ -790,11 +791,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -803,14 +804,14 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testPropertyIds.push(property2.rows[0].property_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.flight_status).toBe('check-property-restrictions');
       expect(result.property_restrictions.length).toBe(2);
 
       const names = result.property_restrictions.map(p => p.property_name);
-      expect(names).toContain('Heritage Site 1');
-      expect(names).toContain('Heritage Site 2');
+      expect(names).toContain('Test Heritage Site 1');
+      expect(names).toContain('Test Heritage Site 2');
     });
 
     it('should truncate policy_summary to 200 characters', async () => {
@@ -820,7 +821,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
         `INSERT INTO property_restrictions (
           property_name, managing_organization, geometry, policy_text, data_source_id
         ) VALUES (
-          'Long Policy Site', 'Test Org',
+          'Test Long Policy Site', 'Test Org',
           ST_Multi(ST_GeomFromGeoJSON($1)),
           $2,
           $3
@@ -830,11 +831,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -844,7 +845,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       const advisory = result.property_restrictions[0];
       expect(advisory.policy_summary.length).toBeLessThanOrEqual(203); // 200 + "..."
@@ -854,7 +855,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
 
   describe('State 3: Permitted (Both Clear)', () => {
     it('should return flight_status "permitted" when airspace clear and no property restrictions', async () => {
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
 
       expect(result.flight_status).toBe('permitted');
       expect(result.airspace_clear).toBe(true);
@@ -881,11 +882,11 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-30.05, -0.05],
+                [-30.05, 0.05],
+                [-29.95, 0.05],
+                [-29.95, -0.05],
+                [-30.05, -0.05],
               ],
             ],
           }),
@@ -895,7 +896,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
       const startTime = Date.now();
-      const result = await service.checkLocation(-0.13, 51.51);
+      const result = await service.checkLocation(-30.0, 0.0);
       const duration = Date.now() - startTime;
 
       expect(duration).toBeLessThan(5000);
@@ -903,3 +904,5 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
     });
   });
 });
+
+

@@ -117,6 +117,11 @@
 - [X] T032 [US1] Modify api-client in frontend/src/services/api-client.ts to handle tri-state LocationCheck response: parse flight_status enum, extract property_restrictions array, map to frontend types
 - [ ] T033 [P] [US1] Create property-api service in frontend/src/services/property-api.ts with fetchPropertyRestrictionsByBbox(bbox) calling GET /api/v1/property-restrictions, return GeoJSON FeatureCollection
 
+#### Core UI Components (FR-001, FR-028)
+
+- [ ] T033A [P] [US1] Implement GPS centering in Map component frontend/src/components/Map.ts: On map initialization (FR-001), request geolocation permission, center map at user's GPS coordinates with accuracy circle indicator, handle permission denied with UK center fallback
+- [ ] T033B [P] [US1] Create LocationButton component in frontend/src/components/LocationButton.ts (FR-028): Add "Return to My Location" button, re-request geolocation permission if needed, animate map pan to current GPS coordinates, show loading spinner during location acquisition, handle errors with user-friendly message
+
 #### Components
 
 - [X] T034 [US1] Modify Map component in frontend/src/components/Map.ts to create custom Leaflet panes (propertyRestrictionsPane z-index:410, airspaceRestrictionsPane z-index:420), implement displayPropertyRestrictions(bbox) method to fetch and render heritage site polygons as semi-transparent amber with diagonal stripes on propertyRestrictionsPane, assign existing airspace layers to airspaceRestrictionsPane for rendering priority, add layer toggle event handlers
@@ -128,7 +133,14 @@
 
 - [X] T038 [US1] Integrate property restrictions in Map component: modify createCombinedPopup() to add "Property Advisory" section when property_restrictions array present, display PropertyAdvisoryPopup for each property, show advisory count badge
 
-**Checkpoint after T038**: User Story 1 implementation complete. Run full test suite with `cd backend && npm run test && cd ../frontend && npm run test`. Verify all tests pass. Test manually by opening http://localhost:5173, checking Stonehenge location (51.1789, -1.8262), confirming tri-state response with "Check Property Policy" status and English Heritage Trust advisory.
+#### Retroactive Test Coverage (Constitution §III TDD Compliance)
+
+- [ ] T038A [P] [US1] Create test for conditional icon rendering in frontend/tests/unit/components/Map.test.ts: Test popup displays 🦋 icon for SSSI properties (restriction_category='SSSI_PROTECTED_AREAS') and 🏛️ icon for heritage properties (restriction_category='HERITAGE_SITES'), verify correct bgColor (#DC2626 for SSSI, #FFA500 for Heritage)
+- [ ] T038B [P] [US1] Create test for category separation in frontend/tests/unit/components/Map.test.ts: Test bottom section groups properties by category (heritageSites array vs sssiSites array), verify separate headings ("🏛️ HERITAGE SITES (n):" and "🦋 SSSI PROTECTED AREAS (n):"), verify amber vs red coloring
+- [ ] T038C [P] [US1] Create test for duplicate filtering in frontend/tests/unit/components/Map.test.ts: Test clicked property is excluded from bottom property list (filteredResult removes clicked property), verify no duplicate property display in popup
+- [ ] T038D [P] [US1] Create test for alignment consistency in frontend/tests/unit/components/Map.test.ts: Test all popup sections use text-align:left (header, status, property sections), verify proper spacing (margin-bottom: 12px, line-height: 1.4), verify no misaligned elements
+
+**Checkpoint after T038D**: Retroactive test coverage complete. All popup formatting changes now have test coverage per Constitution §III TDD mandate.
 
 ---
 
@@ -293,8 +305,13 @@
 ### Documentation Completion
 
 - [ ] T089 Update specs/001-flight-zone-map/quickstart.md with troubleshooting section: "No heritage sites visible" → Check import logs + GIST indexes, "Slow location checks" → Verify work_mem + index usage, "Wrong flight_status" → Check spatial query logic + console logs, "Offline mode not working" → Check service worker registration + cache storage
-- [ ] T090 [P] Create user guide in docs/user-guide.md with screenshots: How to check current location, How to search for addresses, How to toggle map layers, How to read restriction details, How to identify TOAL sites, Understanding tri-state flight status, Offline mode usage, Data freshness indicators
-- [ ] T091 Run quickstart validation from clean environment: `git clone [repo] && cd [repo] && [follow quickstart.md steps]` - Verify all steps complete without errors, document any missing prerequisites
+- [ ] T090 [P] Create user guide in docs/user-guide.md with screenshots: How to check current location, How to search for addresses, How to toggle map layers, How to read restriction details, How to identify TOAL sites, Understanding tri-state flight status, O: 300 requests per 15-min window = 20 req/min sustained)
+- [ ] T093 [P] Add privacy compliance in backend/src/services/location-service.ts: ensure location coordinates never persisted to database (in-memory processing only per NFR-001, NFR-002, NFR-003), add request logging sanitization to remove coordinates from Winston logs, document GDPR data minimization compliance in backend/README.md
+
+### Security & Compliance Validation (NFR-004, NFR-005, FR-022)
+
+- [ ] T093A [P] Add HTTPS validation test in backend/tests/integration/security.test.ts: Test location API calls reject HTTP requests (NFR-004 - HTTPS only), verify SSL/TLS certificate validation in production config, test Connection: upgrade header handling
+- [ ] T093B [P] Add responsive design e2e test in frontend/tests/e2e/responsive.spec.ts (Playwright): Test viewport <768px (mobile) - map full screen, controls stacked vertically; Test 768-1024px (tablet) - map with side panel; Test >1024px (desktop) - full layout (FR-022 responsive requirement)
 
 ### Security & Compliance
 

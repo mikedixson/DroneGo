@@ -985,9 +985,17 @@ export class DroneGoMap {
             const locationResult = await apiClient.checkLocation(e.latlng.lat, e.latlng.lng);
 
             // Create combined popup with property AND flight permission info
+            // Filter out the current property from the list to avoid duplication
+            const filteredResult = {
+              ...locationResult,
+              property_restrictions: (locationResult.property_restrictions || []).filter(
+                (p: any) => p.property_name !== props.property_name
+              )
+            };
+            
             const popup = this.createCombinedPropertyPopup(
               props,
-              locationResult,
+              filteredResult,
               e.latlng.lat,
               e.latlng.lng
             );
@@ -1024,13 +1032,18 @@ export class DroneGoMap {
    * Create popup content for a property restriction
    */
   private createPropertyPopup(properties: any): string {
+    const isSSSI = properties.restriction_category === 'SSSI';
+    const icon = isSSSI ? '🦋' : '🏛️';
+    const bgColor = isSSSI ? '#DC2626' : '#FFA500';
+    const label = isSSSI ? 'SSSI Protected Area' : 'Heritage Site';
+    
     return `
       <div style="min-width: 280px; font-family: system-ui, sans-serif;">
         <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f2937;">
           ${properties.property_name}
         </h3>
-        <div style="background: #FFA500; color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; font-size: 12px;">
-          🏛️ Heritage Site
+        <div style="background: ${bgColor}; color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; font-size: 12px;">
+          ${icon} ${label}
         </div>
         <table style="width: 100%; font-size: 12px;">
           <tr>
@@ -1071,27 +1084,35 @@ export class DroneGoMap {
     lat: number,
     lng: number
   ): string {
+    const isSSSI = properties.restriction_category === 'SSSI';
+    const icon = isSSSI ? '🦋' : '🏛️';
+    const bgColor = isSSSI ? '#DC2626' : '#FFA500';
+    const policyBgColor = isSSSI ? '#fee2e2' : '#fef3c7';
+    const policyTextColor = isSSSI ? '#7f1d1d' : '#92400e';
+    
     // Create property info section
     const propertySection = `
-      <div style="background: #FFA500; color: white; padding: 8px 12px; margin: -12px -12px 12px -12px; border-radius: 8px 8px 0 0;">
-        <h3 style="margin: 0; font-size: 14px; font-weight: 600;">
-          🏛️ ${properties.property_name}
+      <div style="background: ${bgColor}; color: white; padding: 10px 12px; margin: -12px -12px 12px -12px; border-radius: 8px 8px 0 0;">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 600; text-align: left;">
+          ${icon} ${properties.property_name}
         </h3>
-        <div style="font-size: 11px; margin-top: 4px; opacity: 0.9;">
+        <div style="font-size: 11px; margin-top: 4px; opacity: 0.9; text-align: left;">
           ${properties.organization}
         </div>
       </div>
       
       ${properties.policy_text ? `
-        <div style="background: #fef3c7; padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 11px; color: #92400e;">
-          <strong>Policy:</strong><br/>
-          ${properties.policy_text.substring(0, 200)}${properties.policy_text.length > 200 ? '...' : ''}
+        <div style="background: ${policyBgColor}; padding: 10px; border-radius: 4px; margin-bottom: 12px; text-align: left;">
+          <div style="font-size: 11px; font-weight: 600; color: ${policyTextColor}; margin-bottom: 4px;">Policy:</div>
+          <div style="font-size: 11px; color: ${policyTextColor}; line-height: 1.4;">
+            ${properties.policy_text.substring(0, 250)}${properties.policy_text.length > 250 ? '...' : ''}
+          </div>
         </div>
       ` : ''}
       
       ${properties.contact_info ? `
-        <div style="font-size: 11px; color: #666; margin-bottom: 12px;">
-          <strong>Contact:</strong> ${properties.contact_info}
+        <div style="font-size: 11px; color: #4b5563; margin-bottom: 12px; text-align: left;">
+          <strong style="color: #374151;">Contact:</strong> ${properties.contact_info}
         </div>
       ` : ''}
     `;
@@ -1100,9 +1121,9 @@ export class DroneGoMap {
     const flightSection = this.createLocationCheckPopup(locationResult, lat, lng);
 
     return `
-      <div style="min-width: 320px; font-family: system-ui, sans-serif;">
+      <div style="min-width: 320px; max-width: 380px; font-family: system-ui, sans-serif; text-align: left;">
         ${propertySection}
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;" />
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
         ${flightSection}
       </div>
     `;
@@ -1189,40 +1210,73 @@ export class DroneGoMap {
     // Property restrictions section (T038)
     let propertyHtml = '';
     if (result.property_restrictions && result.property_restrictions.length > 0) {
-      const count = result.property_restrictions.length;
-      propertyHtml = `
-        <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
-          <strong style="color: #92400e; font-size: 12px;">🏛️ HERITAGE SITES (${count}):</strong>
-          <div style="margin-top: 8px; max-height: 150px; overflow-y: auto;">
-            ${result.property_restrictions.map((prop: any) => `
-              <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px; font-size: 11px;">
-                <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
-                <div style="color: #666; margin-top: 2px;">${prop.organization}</div>
-                ${prop.policy_summary ? `
-                  <div style="margin-top: 4px; font-style: italic; color: #4b5563;">
-                    ${prop.policy_summary}
-                  </div>
-                ` : ''}
-                ${prop.contact ? `
-                  <div style="margin-top: 4px; color: #666;">
-                    <strong>Contact:</strong> ${prop.contact}
-                  </div>
-                ` : ''}
-              </div>
-            `).join('')}
+      // Group by category
+      const heritageSites = result.property_restrictions.filter((p: any) => p.restriction_category !== 'SSSI');
+      const sssiSites = result.property_restrictions.filter((p: any) => p.restriction_category === 'SSSI');
+      
+      // Show heritage sites if any
+      if (heritageSites.length > 0) {
+        propertyHtml += `
+          <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; text-align: left;">
+            <strong style="color: #92400e; font-size: 12px;">🏛️ HERITAGE SITES (${heritageSites.length}):</strong>
+            <div style="margin-top: 8px; max-height: 150px; overflow-y: auto;">
+              ${heritageSites.map((prop: any) => `
+                <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px; font-size: 11px; text-align: left;">
+                  <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
+                  <div style="color: #6b7280; margin-top: 2px;">${prop.organization}</div>
+                  ${prop.policy_summary ? `
+                    <div style="margin-top: 4px; font-style: italic; color: #4b5563; line-height: 1.4;">
+                      ${prop.policy_summary}
+                    </div>
+                  ` : ''}
+                  ${prop.contact ? `
+                    <div style="margin-top: 4px; color: #6b7280;">
+                      <strong>Contact:</strong> ${prop.contact}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
+      
+      // Show SSSI sites if any
+      if (sssiSites.length > 0) {
+        propertyHtml += `
+          <div style="margin-top: 12px; padding: 10px; background: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px; text-align: left;">
+            <strong style="color: #7f1d1d; font-size: 12px;">🦋 SSSI PROTECTED AREAS (${sssiSites.length}):</strong>
+            <div style="margin-top: 8px; max-height: 150px; overflow-y: auto;">
+              ${sssiSites.map((prop: any) => `
+                <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px; font-size: 11px; text-align: left;">
+                  <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
+                  <div style="color: #6b7280; margin-top: 2px;">${prop.organization}</div>
+                  ${prop.policy_summary ? `
+                    <div style="margin-top: 4px; font-style: italic; color: #4b5563; line-height: 1.4;">
+                      ${prop.policy_summary}
+                    </div>
+                  ` : ''}
+                  ${prop.contact ? `
+                    <div style="margin-top: 4px; color: #6b7280;">
+                      <strong>Contact:</strong> ${prop.contact}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
     }
 
     let zonesHtml = '';
     if (result.zones && result.zones.length > 0) {
       zonesHtml = `
-        <div style="margin-top: 12px;">
-          <strong style="color: #666; font-size: 11px;">RESTRICTION ZONES (${result.zones.length}):</strong>
-          <ul style="margin: 4px 0; padding-left: 20px; font-size: 11px;">
+        <div style="margin-top: 12px; text-align: left;">
+          <strong style="color: #6b7280; font-size: 11px;">RESTRICTION ZONES (${result.zones.length}):</strong>
+          <ul style="margin: 6px 0; padding-left: 20px; font-size: 11px; color: #374151;">
             ${result.zones.map((zone: any) => `
-              <li style="margin: 2px 0;">${zone.restriction_name}</li>
+              <li style="margin: 3px 0; line-height: 1.4;">${zone.restriction_name}</li>
             `).join('')}
           </ul>
         </div>
@@ -1233,13 +1287,13 @@ export class DroneGoMap {
     if (result.nearest_toal) {
       const distanceKm = (result.nearest_toal.distance_meters / 1000).toFixed(2);
       toalHtml = `
-        <div style="margin-top: 12px; padding: 8px; background: #f3f4f6; border-radius: 4px;">
-          <strong style="color: #666; font-size: 11px;">NEAREST TOAL SITE:</strong>
-          <div style="font-size: 12px; margin-top: 4px;">
+        <div style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 4px; text-align: left;">
+          <strong style="color: #6b7280; font-size: 11px; display: block; margin-bottom: 4px;">NEAREST TOAL SITE:</strong>
+          <div style="font-size: 12px; color: #374151;">
             📍 ${result.nearest_toal.site_name}
-            <div style="color: #666; font-size: 11px; margin-top: 2px;">
-              Distance: ${distanceKm} km
-            </div>
+          </div>
+          <div style="color: #6b7280; font-size: 11px; margin-top: 4px;">
+            Distance: ${distanceKm} km
           </div>
         </div>
       `;
@@ -1260,26 +1314,22 @@ export class DroneGoMap {
     }
 
     return `
-      <div style="min-width: 300px; font-family: system-ui, sans-serif;">
-        <div style="background: ${statusColor}; color: white; padding: 12px; margin: -8px -8px 12px -8px; border-radius: 4px 4px 0 0;">
-          <div style="font-size: 24px; margin-bottom: 4px;">${statusIcon}</div>
-          <div style="font-weight: 600; font-size: 13px;">${statusText}</div>
+      <div style="min-width: 300px; font-family: system-ui, sans-serif; text-align: left;">
+        <div style="background: ${statusColor}; color: white; padding: 14px 12px; margin: -8px -8px 12px -8px; border-radius: 4px 4px 0 0; text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 6px;">${statusIcon}</div>
+          <div style="font-weight: 600; font-size: 13px; letter-spacing: 0.5px;">${statusText}</div>
         </div>
-        <table style="width: 100%; font-size: 12px; margin-bottom: 8px;">
-          <tr>
-            <td style="padding: 4px 0; color: #666;"><strong>Status:</strong></td>
-            <td style="padding: 4px 0;">${statusDescription}</td>
-          </tr>
-          ${result.authorization_required ? `
-            <tr>
-              <td colspan="2" style="padding: 8px 0;">
-                <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 8px; font-size: 11px;">
-                  ⚠️ Authorization required from local authority
-                </div>
-              </td>
-            </tr>
-          ` : ''}
-        </table>
+        <div style="margin-bottom: 12px; padding: 8px 0; text-align: left;">
+          <div style="font-size: 11px; color: #6b7280; font-weight: 600; margin-bottom: 4px;">Status:</div>
+          <div style="font-size: 12px; color: #374151; line-height: 1.5;">${statusDescription}</div>
+        </div>
+        ${result.authorization_required ? `
+          <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 10px; margin-bottom: 12px; border-radius: 4px; text-align: left;">
+            <div style="font-size: 11px; color: #92400e; line-height: 1.4;">
+              ⚠️ Authorization required from local authority
+            </div>
+          </div>
+        ` : ''}
         ${propertyHtml}
         ${zonesHtml}
         ${toalHtml}
@@ -1764,6 +1814,7 @@ export class DroneGoMap {
       this.layersEnabled.zones = zonesCheckbox.checked;
       if (zonesCheckbox.checked) {
         this.map?.addLayer(this.zonesLayer);
+        this.loadMapData(); // Reload data when layer is turned back on
       } else {
         this.map?.removeLayer(this.zonesLayer);
       }
@@ -1775,6 +1826,7 @@ export class DroneGoMap {
       this.layersEnabled.airspace = airspaceCheckbox.checked;
       if (airspaceCheckbox.checked) {
         this.map?.addLayer(this.airspaceLayer);
+        this.loadMapData(); // Reload data when layer is turned back on
       } else {
         this.map?.removeLayer(this.airspaceLayer);
       }
@@ -1786,6 +1838,7 @@ export class DroneGoMap {
       this.layersEnabled.toal = toalCheckbox.checked;
       if (toalCheckbox.checked) {
         this.map?.addLayer(this.toalLayer);
+        this.loadMapData(); // Reload data when layer is turned back on
       } else {
         this.map?.removeLayer(this.toalLayer);
       }
@@ -1797,6 +1850,7 @@ export class DroneGoMap {
       this.layersEnabled.propertyRestrictions = propertyCheckbox.checked;
       if (propertyCheckbox.checked) {
         this.map?.addLayer(this.propertyRestrictionsLayer);
+        this.loadMapData(); // Reload data when layer is turned back on
       } else {
         this.map?.removeLayer(this.propertyRestrictionsLayer);
       }
@@ -1808,6 +1862,7 @@ export class DroneGoMap {
       this.layersEnabled.sssi = sssiCheckbox.checked;
       if (sssiCheckbox.checked) {
         this.map?.addLayer(this.sssiLayer);
+        this.loadMapData(); // Reload data when layer is turned back on
       } else {
         this.map?.removeLayer(this.sssiLayer);
       }

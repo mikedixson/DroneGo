@@ -168,11 +168,11 @@ database/
 
 ## Phase 0: Research & Decision Making
 
-**Status**: PENDING (requires knowledge gap resolution)
+**Status**: ✅ COMPLETE (2026-02-18) - See research.md for decisions
 
 ### Research Questions
 
-**Research is DEFERRED until after plan review. The following unknowns must be researched before Phase 1:**
+**Research COMPLETED on 2026-02-18. Decisions documented in research.md:**
 
 1. **Heritage Data Source APIs** (NEEDS CLARIFICATION)
    - **Question**: What are the exact API endpoints, authentication requirements, and data formats for National Trust, English Heritage, and Historic England?

@@ -12,6 +12,8 @@
     "test:coverage": "vitest --coverage",
     "migrate": "tsx src/lib/migrations.ts",
     "seed": "tsx src/lib/seed.ts",
+    "import:national-trust": "tsx src/scripts/import-national-trust.ts",
+    "import:historic-england": "tsx src/scripts/import-historic-england.ts",
     "lint": "eslint src tests --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
   },
