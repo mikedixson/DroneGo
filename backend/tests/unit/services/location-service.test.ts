@@ -591,7 +591,7 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       );
       testZoneIds.push(zoneResult.rows[0].zone_id);
 
-      // Also create property restriction (should be ignored)
+      // Also create property restriction (populated for UI even though flight prohibited)
       const propertyResult = await pool.query(
         `INSERT INTO property_restrictions (
           property_name, managing_organization, geometry, policy_text, data_source_id
@@ -623,9 +623,9 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
 
       expect(result.flight_status).toBe('prohibited');
       expect(result.airspace_clear).toBe(false);
-      expect(result.property_advisory).toBe(false); // Airspace takes precedence
+      expect(result.property_advisory).toBe(true); // Populated for UI display
       expect(result.zones.length).toBeGreaterThan(0);
-      expect(result.property_restrictions.length).toBe(0); // Not populated when airspace restricted
+      expect(result.property_restrictions.length).toBeGreaterThan(0); // Populated for UI even in State 1
     });
 
     it('should return flight_status "prohibited" for controlled airspace requiring authorization', async () => {

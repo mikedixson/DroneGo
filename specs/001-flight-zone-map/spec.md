@@ -26,6 +26,7 @@
 ### Session 2026-02-19
 
 - Q: What drone classification system should be used for filtering restrictions by drone type? → A: CAA/EU drone class designation (C0, C1, C2, C3, Legacy) with weight auto-populated but user can override weight
+
 - Q: Should drone settings filtering hide non-applicable restrictions or show all with highlighting? → A: Show all restrictions but visually highlight/emphasize those applicable to user's drone
 
 ---
