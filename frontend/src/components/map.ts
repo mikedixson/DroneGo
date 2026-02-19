@@ -871,12 +871,86 @@ export class DroneGoMap {
 
         ${additionalZonesHtml}
 
+        <!-- Property Restrictions Section -->
+        ${this.createPropertyRestrictionsHtml(locationResult)}
+
         <!-- Coordinates -->
         <div style="font-size: 10px; color: #9ca3af; text-align: center; margin-top: 8px;">
           ${lat.toFixed(5)}°, ${lng.toFixed(5)}°
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Create HTML for property restrictions display
+   * Shared between zone popup and location check popup
+   */
+  private createPropertyRestrictionsHtml(locationResult: any): string {
+    if (!locationResult.property_restrictions || locationResult.property_restrictions.length === 0) {
+      return '';
+    }
+
+    const heritageSites = locationResult.property_restrictions.filter((p: any) => p.restriction_category !== 'SSSI');
+    const sssiSites = locationResult.property_restrictions.filter((p: any) => p.restriction_category === 'SSSI');
+    
+    let html = '';
+
+    // Show heritage sites if any
+    if (heritageSites.length > 0) {
+      html += `
+        <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; text-align: left;">
+          <strong style="color: #92400e; font-size: 11px;">🏛️ HERITAGE SITES (${heritageSites.length}):</strong>
+          <div style="margin-top: 6px; max-height: 120px; overflow-y: auto;">
+            ${heritageSites.map((prop: any) => `
+              <div style="margin: 4px 0; padding: 6px; background: white; border-radius: 3px; font-size: 10px; text-align: left;">
+                <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
+                <div style="color: #6b7280; font-size: 9px; margin-top: 1px;">${prop.organization}</div>
+                ${prop.policy_summary ? `
+                  <div style="margin-top: 3px; font-style: italic; color: #4b5563; line-height: 1.3; font-size: 9px;">
+                    ${prop.policy_summary}
+                  </div>
+                ` : ''}
+                ${prop.contact ? `
+                  <div style="margin-top: 3px; color: #6b7280; font-size: 9px;">
+                    <strong>Contact:</strong> ${prop.contact}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // Show SSSI sites if any
+    if (sssiSites.length > 0) {
+      html += `
+        <div style="margin-top: 12px; padding: 10px; background: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px; text-align: left;">
+          <strong style="color: #7f1d1d; font-size: 11px;">🦋 SSSI PROTECTED (${sssiSites.length}):</strong>
+          <div style="margin-top: 6px; max-height: 120px; overflow-y: auto;">
+            ${sssiSites.map((prop: any) => `
+              <div style="margin: 4px 0; padding: 6px; background: white; border-radius: 3px; font-size: 10px; text-align: left;">
+                <div style="font-weight: 600; color: #1f2937;">${prop.property_name}</div>
+                <div style="color: #6b7280; font-size: 9px; margin-top: 1px;">${prop.organization}</div>
+                ${prop.policy_summary ? `
+                  <div style="margin-top: 3px; font-style: italic; color: #4b5563; line-height: 1.3; font-size: 9px;">
+                    ${prop.policy_summary}
+                  </div>
+                ` : ''}
+                ${prop.contact ? `
+                  <div style="margin-top: 3px; color: #6b7280; font-size: 9px;">
+                    <strong>Contact:</strong> ${prop.contact}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    return html;
   }
 
   /**
