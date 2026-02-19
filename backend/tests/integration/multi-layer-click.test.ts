@@ -155,10 +155,23 @@ describe('Multi-Layer Click Integration', () => {
 
   it('should show property restrictions when clicking heritage site in clear airspace', async () => {
     // Test coordinates: away from airspace restrictions but on a heritage site
-    const testLat = 51.4769; // Greenwich Park
+    const testLat = 51.4769;
     const testLon = -0.0015;
 
     // Create ONLY a property restriction (no airspace zone)
+    const propertyGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.0065, 51.4719], // SW
+          [-0.0065, 51.4819], // NW
+          [0.0035, 51.4819],  // NE
+          [0.0035, 51.4719],  // SE
+          [-0.0065, 51.4719], // Close
+        ],
+      ],
+    };
+
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
@@ -166,12 +179,12 @@ describe('Multi-Layer Click Integration', () => {
       ) VALUES (
         'Test Greenwich Park Heritage Site',
         'Royal Parks',
-        ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 300)::geometry),
+        ST_Multi(ST_GeomFromGeoJSON($1)),
         'Historic park. Please respect visitors and wildlife. Contact: parks@royal.gov.uk',
         'HERITAGE_SITE',
-        $3
+        $2
       ) RETURNING property_id`,
-      [testLon, testLat, dataSourceIds['Test Historic England']]
+      [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
@@ -200,6 +213,19 @@ describe('Multi-Layer Click Integration', () => {
     const testLon = -0.1200;
 
     // Create a no-fly zone
+    const zoneGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.1250, 51.4950], // SW
+          [-0.1250, 51.5050], // NW
+          [-0.1150, 51.5050], // NE
+          [-0.1150, 51.4950], // SE
+          [-0.1250, 51.4950], // Close
+        ],
+      ],
+    };
+
     const zoneResult = await pool.query(
       `INSERT INTO restriction_zones (
         zone_type, restriction_name, geometry, authority_source, data_source_id,
@@ -207,19 +233,32 @@ describe('Multi-Layer Click Integration', () => {
       ) VALUES (
         'no-fly',
         'Test No-Fly Zone',
-        ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 400)::geometry),
+        ST_Multi(ST_GeomFromGeoJSON($1)),
         'Test CAA',
-        $3,
+        $2,
         0,
         400,
         false,
         'primary-authority'
       ) RETURNING zone_id`,
-      [testLon, testLat, dataSourceIds['Test CAA']]
+      [JSON.stringify(zoneGeometry), dataSourceIds['Test CAA']]
     );
     zoneId = zoneResult.rows[0].zone_id;
 
     // Create a property restriction at the same location
+    const propertyGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.1225, 51.4975], // SW
+          [-0.1225, 51.5025], // NW
+          [-0.1175, 51.5025], // NE
+          [-0.1175, 51.4975], // SE
+          [-0.1225, 51.4975], // Close
+        ],
+      ],
+    };
+
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
@@ -227,12 +266,12 @@ describe('Multi-Layer Click Integration', () => {
       ) VALUES (
         'Test Historic Building',
         'Test Organization',
-        ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 150)::geometry),
+        ST_Multi(ST_GeomFromGeoJSON($1)),
         'Protected building. No drone flights.',
         'HERITAGE_SITE',
-        $3
+        $2
       ) RETURNING property_id`,
-      [testLon, testLat, dataSourceIds['Test Historic England']]
+      [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
