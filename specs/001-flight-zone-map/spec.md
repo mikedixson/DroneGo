@@ -23,6 +23,10 @@
 - Q: How should overlapping restrictions be visually prioritized? → A: Airspace legal restrictions always on top, property advisory beneath
 - Q: How should the location check determine "flight_status" when airspace is clear but property has restrictions? → A: flight_status enum with tri-state (permitted/prohibited/check-property-restrictions)
 
+### Session 2026-02-19
+
+- Q: What drone classification system should be used for filtering restrictions by drone type? → A: CAA/EU drone class designation (C0, C1, C2, C3, Legacy) with weight auto-populated but user can override weight
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -148,6 +152,16 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **FR-028**: Users MUST be able to return to their current GPS location using a dedicated location button that re-centers the map and re-requests geolocation permissions if needed
 - **FR-029**: Users MUST be able to independently toggle visibility of restriction zones and airspace classification layers to reduce visual clutter
 
+**Drone Settings:**
+
+- **FR-030**: Users MUST be able to access drone settings configuration from a dedicated settings menu or icon
+- **FR-031**: Users MUST be able to select their drone class from CAA/EU options (C0, C1, C2, C3, Legacy) with class definitions and weight ranges displayed
+- **FR-032**: System MUST auto-populate drone weight based on selected class (C0:<250g, C1:<900g, C2:<4kg, C3:<25kg) but allow manual override
+- **FR-033**: Users MUST be able to set their maximum operational altitude in feet for their specific drone and authorization level
+- **FR-034**: System MUST save drone profile settings to sessionStorage (persists during browser session, cleared on tab/window close)
+- **FR-035**: System MUST filter and highlight restrictions applicable to the configured drone class when a profile is active
+- **FR-036**: System MUST indicate on the map which restrictions apply to the user's specific drone configuration versus general restrictions
+
 **Data Quality & Updates:**
 
 - **FR-014**: System MUST integrate with NATS (National Air Traffic Services) official airspace data from digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
@@ -209,6 +223,8 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **Location**: Represents either the user's current position or a searched location. Includes coordinates (latitude/longitude), determined airspace restriction status using tri-state logic (flight_status: permitted = airspace clear, prohibited = airspace restricted, check-property-restrictions = airspace clear but property restrictions apply), property_restrictions array listing any property-based policies, nearest TOAL site reference with distance, and applicable airspace restrictions at that point.
 
 - **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., NATS for airspace data, CAA for regulatory guidance), data type provided, last update timestamp, update frequency, and reliability/confidence level.
+
+- **Drone Profile**: Represents user's drone configuration for filtering applicable restrictions. Includes drone_class (C0, C1, C2, C3, Legacy as per CAA/EU classification), weight_grams (auto-populated from class but user-overridable), max_altitude_feet (user's operational or authorization ceiling), and optional drone_name. Stored in client-side session storage only; cleared when browser session ends.
 
 - **Temporary Restriction (NOTAM)**: Represents time-limited flying restrictions. Includes NOTAM identifier, issuing authority, affected area (polygon or radius), effective start date/time, expiration date/time, restriction reason, and altitude limits.
 
