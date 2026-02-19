@@ -110,21 +110,22 @@ describe('Multi-Layer Click Integration', () => {
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
-        restriction_category, data_source_id
+        restriction_category, data_source_id, contact_info
       ) VALUES (
         'Test Tower of London',
         'Historic Royal Palaces',
         ST_Multi(ST_GeomFromGeoJSON($1)),
         'Historic UNESCO World Heritage Site. Drone operations are prohibited within 200 meters without written authorization from Historic Royal Palaces. Contact heritage@hrp.org.uk for permissions.',
         'HERITAGE_SITE',
-        $2
+        $2,
+        'heritage@hrp.org.uk'
       ) RETURNING property_id`,
       [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
     // 3. Check location - should return BOTH zone and property information
-    const result = await service.checkLocation(testLat,testLon);
+    const result = await service.checkLocation(testLon, testLat);
 
     // Assertions: verify all layer information is present
     expect(result).toBeDefined();
@@ -155,19 +156,20 @@ describe('Multi-Layer Click Integration', () => {
 
   it('should show property restrictions when clicking heritage site in clear airspace', async () => {
     // Test coordinates: away from airspace restrictions but on a heritage site
-    const testLat = 51.4769;
-    const testLon = -0.0015;
+    // Using coordinates north of London TMA (which covers 51.3-51.7)
+    const testLat = 51.85;
+    const testLon = -0.05;
 
     // Create ONLY a property restriction (no airspace zone)
     const propertyGeometry = {
       type: 'Polygon',
       coordinates: [
         [
-          [-0.0065, 51.4719], // SW
-          [-0.0065, 51.4819], // NW
-          [0.0035, 51.4819],  // NE
-          [0.0035, 51.4719],  // SE
-          [-0.0065, 51.4719], // Close
+          [-0.10, 51.80], // SW - North of London TMA
+          [-0.10, 51.90], // NW
+          [0.00, 51.90],  // NE
+          [0.00, 51.80],  // SE
+          [-0.10, 51.80], // Close
         ],
       ],
     };
@@ -175,21 +177,22 @@ describe('Multi-Layer Click Integration', () => {
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
-        restriction_category, data_source_id
+        restriction_category, data_source_id, contact_info
       ) VALUES (
         'Test Greenwich Park Heritage Site',
         'Royal Parks',
         ST_Multi(ST_GeomFromGeoJSON($1)),
         'Historic park. Please respect visitors and wildlife. Contact: parks@royal.gov.uk',
         'HERITAGE_SITE',
-        $2
+        $2,
+        'parks@royal.gov.uk'
       ) RETURNING property_id`,
       [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
     // Check location
-    const result = await service.checkLocation(testLat, testLon);
+    const result = await service.checkLocation(testLon, testLat);
 
     // Should be no airspace restrictions
     expect(result.zones.length).toBe(0);
@@ -262,21 +265,22 @@ describe('Multi-Layer Click Integration', () => {
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
-        restriction_category, data_source_id
+        restriction_category, data_source_id, contact_info
       ) VALUES (
         'Test Historic Building',
         'Test Organization',
         ST_Multi(ST_GeomFromGeoJSON($1)),
         'Protected building. No drone flights.',
         'HERITAGE_SITE',
-        $2
+        $2,
+        'contact@testorg.uk'
       ) RETURNING property_id`,
       [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
     // Check location
-    const result = await service.checkLocation(testLat, testLon);
+    const result = await service.checkLocation(testLon, testLat);
 
     // Should have zone info
     expect(result.zones.length).toBeGreaterThan(0);

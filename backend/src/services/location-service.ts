@@ -162,11 +162,10 @@ export class LocationService {
       // Step 3: Check if airspace is restricted
       const airspaceRestricted = zones.length > 0;
 
-      // Step 4: Query property restrictions (only if airspace clear - optimization)
-      let properties: any[] = [];
-      if (!airspaceRestricted) {
-        properties = await this.propertyService.checkPropertyRestrictions(lng, lat);
-      }
+      // Step 4: Query property restrictions (ALWAYS query for UI display)
+      // Note: Flight decision ignores properties in State 1, but we still
+      // return them so the UI can show ALL layers affecting the location
+      const properties = await this.propertyService.checkPropertyRestrictions(lng, lat);
 
       const propertyRestricted = properties.length > 0;
 
@@ -179,7 +178,8 @@ export class LocationService {
         // State 1: Airspace Restricted → Prohibited
         flight_status = 'prohibited';
         message = 'Flight prohibited due to airspace restrictions.';
-        property_restrictions = []; // Not populated when airspace restricted
+        // Still populate property_restrictions for UI display (even though flight decision ignores them)
+        property_restrictions = this.propertyService.formatPropertyAdvisories(properties);
       } else if (propertyRestricted) {
         // State 2: Airspace Clear + Property Restricted → Check Property Restrictions
         flight_status = 'check-property-restrictions';
