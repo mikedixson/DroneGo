@@ -5,11 +5,20 @@ import { getDbPool } from '../../../src/lib/db.js';
 describe('RestrictionZone Model', () => {
   let restrictionZone: RestrictionZone;
   let testZoneId: string;
+  let testDataSourceId: string;
 
   beforeAll(async () => {
     // Ensure database connection
     const pool = getDbPool();
     await pool.query('SELECT 1');
+    
+    // Create a test data_source for use across tests
+    const dataSourceResult = await pool.query(`
+      INSERT INTO data_sources (authority_name, last_sync_timestamp)
+      VALUES ('Test Authority', CURRENT_TIMESTAMP)
+      RETURNING source_id
+    `);
+    testDataSourceId = dataSourceResult.rows[0].source_id;
   });
 
   beforeEach(() => {
@@ -18,10 +27,14 @@ describe('RestrictionZone Model', () => {
 
   afterAll(async () => {
     // Clean up test data
+    const pool = getDbPool();
     if (testZoneId) {
       await restrictionZone.delete(testZoneId);
     }
-    const pool = getDbPool();
+    // Delete test data_source (CASCADE will delete any zones)
+    if (testDataSourceId) {
+      await pool.query('DELETE FROM data_sources WHERE source_id = $1', [testDataSourceId]);
+    }
     await pool.end();
   });
 
@@ -58,6 +71,7 @@ describe('RestrictionZone Model', () => {
         description: 'Test restriction zone for unit testing',
         authorization_possible: false,
         confidence_level: 'primary-authority',
+        data_source_id: testDataSourceId,
       };
 
       const created = await restrictionZone.create(zoneData);

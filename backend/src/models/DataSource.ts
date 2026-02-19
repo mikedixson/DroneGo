@@ -14,7 +14,6 @@ export interface DataSourceAttributes extends BaseModelAttributes {
   license: string;
   attribution: string;
   contact_email: string | null;
-  last_updated: Date;
   created_at: Date;
 }
 
@@ -74,8 +73,7 @@ export class DataSource extends BaseModel<DataSourceAttributes> {
   async updateSyncTimestamp(sourceId: string): Promise<void> {
     const query = `
       UPDATE ${this.tableName}
-      SET last_sync_timestamp = NOW(),
-          last_updated = NOW()
+      SET last_sync_timestamp = NOW()
       WHERE ${this.primaryKey} = $1
     `;
     await this.query(query, [sourceId]);

@@ -164,12 +164,21 @@ export class RestrictionZone extends BaseModel<RestrictionZoneAttributes> {
   async create(data: Partial<RestrictionZoneAttributes>): Promise<RestrictionZoneAttributes> {
     // Convert GeoJSON geometry to PostGIS format if provided
     if (data.geometry) {
+      // Convert Polygon to MultiPolygon if necessary (database expects MultiPolygon)
+      let geometryGeoJSON = data.geometry;
+      if (data.geometry.type === 'Polygon') {
+        geometryGeoJSON = {
+          type: 'MultiPolygon',
+          coordinates: [data.geometry.coordinates],
+        };
+      }
+
       const keys = Object.keys(data).filter((k) => k !== 'geometry');
       const values = keys.map((k) => (data as any)[k]);
 
       // Add geometry as GeoJSON conversion
       keys.push('geometry');
-      values.push(data.geometry);
+      values.push(geometryGeoJSON);
 
       const placeholders = keys.map((k, index) => {
         if (k === 'geometry') {

@@ -239,7 +239,7 @@ describe('PropertyRestriction Model - Heritage Sites', () => {
       });
 
       testPropertyIds.push(property.property_id);
-      expect(property.property_text?.length).toBe(5000);
+      expect(property.policy_text?.length).toBe(5000);
     });
   });
 

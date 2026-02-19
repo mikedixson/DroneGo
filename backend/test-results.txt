@@ -5519,3 +5519,4 @@ Please input filter pattern[1A[38G[3Jc
 
 [1m[7m[32m PASS [39m[27m[22m[32m Waiting for file changes...[39m
        [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+^C

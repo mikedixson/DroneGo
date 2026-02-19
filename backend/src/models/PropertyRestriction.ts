@@ -63,6 +63,22 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
   }): Promise<PropertyRestrictionAttributes> {
     const pool = (await import('../lib/db.js')).getDbPool();
 
+    // Validate required fields
+    if (!data.property_name) {
+      throw new Error('property_name is required');
+    }
+    if (!data.managing_organization) {
+      throw new Error('managing_organization is required');
+    }
+    if (!data.geometry) {
+      throw new Error('geometry is required');
+    }
+
+    // Validate policy_text length
+    if (data.policy_text && data.policy_text.length > 5000) {
+      throw new Error('policy_text must not exceed 5000 characters');
+    }
+
     // Convert Polygon to MultiPolygon if necessary
     let geometryGeoJSON = data.geometry;
     if (data.geometry.type === 'Polygon') {

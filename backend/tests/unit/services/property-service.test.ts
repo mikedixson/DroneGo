@@ -63,7 +63,8 @@ describe('PropertyService - Spatial Query Tests', () => {
   });
 
   beforeEach(async () => {
-    await pool.query("DELETE FROM property_restrictions WHERE property_name LIKE 'Test%'");
+    // Clean ALL property_restrictions to ensure test isolation
+    await pool.query("DELETE FROM property_restrictions");
     testPropertyIds = [];
   });
 
@@ -177,7 +178,7 @@ describe('PropertyService - Spatial Query Tests', () => {
     it('should detect all overlapping properties at coordinates', async () => {
       // Create two overlapping circular sites
       const center1 = turf.point([-1.0, 51.0]);
-      const center2 = turf.point([-0.99, 51.01]); // Slightly offset
+      const center2 = turf.point([-0.998, 51.002]); // Very close offset - ensures overlap
 
       const circle1 = turf.circle(center1, 0.5, { steps: 16, units: 'kilometers' });
       const circle2 = turf.circle(center2, 0.5, { steps: 16, units: 'kilometers' });
@@ -208,8 +209,8 @@ describe('PropertyService - Spatial Query Tests', () => {
       );
       testPropertyIds.push(result2.rows[0].property_id);
 
-      // Check point in overlap area
-      const restrictions = await service.checkPropertyRestrictions(-0.995, 51.005);
+      // Check point midway between centers - guaranteed to be in overlap area
+      const restrictions = await service.checkPropertyRestrictions(-0.999, 51.001);
 
       expect(restrictions.length).toBe(2);
       expect(restrictions.map(r => r.property_name)).toContain('Test Overlap Site 1');
