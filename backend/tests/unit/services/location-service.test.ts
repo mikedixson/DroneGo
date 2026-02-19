@@ -903,6 +903,32 @@ describe('LocationService - Tri-State Logic (User Story 1)', () => {
       expect(result.flight_status).toBe('check-property-restrictions');
     });
   });
+
+  describe('Error Handling', () => {
+    it('should re-throw coordinate validation errors from geospatial service', async () => {
+      // Test invalid longitude (line 215-216: validation error re-throw)
+      await expect(service.checkLocation(999, 51.5)).rejects.toThrow(/longitude/);
+      
+      // Test invalid latitude
+      await expect(service.checkLocation(-0.1, 999)).rejects.toThrow(/latitude/);
+    });
+
+    it('should wrap non-validation database errors with location context', async () => {
+      // Test generic error wrapping (line 243: generic error catch)
+      // Create a service instance with a mocked geospatial service that throws
+      const originalPool = service['geospatialService']['pool'];
+      
+      // Temporarily break the connection to trigger a database error
+      (service['geospatialService'] as any).pool = {
+        query: () => { throw new Error('Database connection lost'); }
+      };
+      
+      await expect(service.checkLocation(-0.1, 51.5)).rejects.toThrow(/Failed to check location/);
+      
+      // Restore original pool
+      (service['geospatialService'] as any).pool = originalPool;
+    });
+  });
 });
 
 

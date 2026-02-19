@@ -461,4 +461,67 @@ describe('PropertyService - Spatial Query Tests', () => {
       expect(property).toBeNull();
     });
   });
+
+  describe('getPropertiesByOrganization - Organization Query', () => {
+    it('should retrieve all properties managed by specific organization', async () => {
+      // Create multiple properties with same organization
+      const circle1 = turf.circle([-1.0, 51.0], 0.3, { steps: 16, units: 'kilometers' });
+      const circle2 = turf.circle([-1.5, 51.2], 0.4, { steps: 16, units: 'kilometers' });
+
+      const result1 = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Test Historic England Site 1', 'Historic England',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Site 1 policy.',
+          $2
+        ) RETURNING property_id`,
+        [JSON.stringify(circle1.geometry), testDataSourceId]
+      );
+      testPropertyIds.push(result1.rows[0].property_id);
+
+      const result2 = await pool.query(
+        `INSERT INTO property_restrictions (
+          property_name, managing_organization, geometry, policy_text, data_source_id
+        ) VALUES (
+          'Test Historic England Site 2', 'Historic England',
+          ST_Multi(ST_GeomFromGeoJSON($1)),
+          'Site 2 policy.',
+          $2
+        ) RETURNING property_id`,
+        [JSON.stringify(circle2.geometry), testDataSourceId]
+      );
+      testPropertyIds.push(result2.rows[0].property_id);
+
+      // Test line 72-73: getPropertiesByOrganization return
+      const properties = await service.getPropertiesByOrganization('Historic England');
+
+      expect(properties.length).toBeGreaterThanOrEqual(2);
+      const names = properties.map(p => p.property_name);
+      expect(names).toContain('Test Historic England Site 1');
+      expect(names).toContain('Test Historic England Site 2');
+    });
+  });
+
+  describe('truncatePolicyText - Text Truncation', () => {
+    it('should return empty string for null policy text', async () => {
+      // Test line 87-88: null text handling
+      const result = service.truncatePolicyText(null);
+      expect(result).toBe('');
+    });
+
+    it('should return original text when shorter than max length', async () => {
+      const shortText = 'This is a short policy.';
+      const result = service.truncatePolicyText(shortText, 200);
+      expect(result).toBe(shortText);
+    });
+
+    it('should truncate long text and add ellipsis', async () => {
+      const longText = 'A'.repeat(300);
+      const result = service.truncatePolicyText(longText, 200);
+      expect(result.length).toBe(203); // 200 chars + '...'
+      expect(result).toMatch(/\.\.\.$/);
+    });
+  });
 });

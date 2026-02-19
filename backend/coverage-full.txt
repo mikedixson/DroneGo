@@ -1,0 +1,568 @@
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/miked/Downloads/DroneGo/backend[39m
+[2m      Coverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/services/geospatial-service.test.ts[2m > [22m[2mGeospatialService - SAFETY CRITICAL[22m[39m
+2026-02-19 18:51:25 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:25"
+}
+
+[90mstdout[2m | tests/integration/property-restrictions.test.ts[2m > [22m[2mProperty Restrictions Integration Tests - Heritage Site Detection[22m[39m
+2026-02-19 18:51:25 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:25"
+}
+
+[90mstdout[2m | tests/unit/services/location-service.test.ts[2m > [22m[2mLocationService - SAFETY CRITICAL[22m[39m
+2026-02-19 18:51:25 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:25"
+}
+
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mStonehenge Detection - English Heritage Trust[2m > [22mshould detect property restriction at Stonehenge coordinates (51.1789, -1.8262)
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mStonehenge Detection - English Heritage Trust[2m > [22mshould NOT detect property restriction outside Stonehenge boundary
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould find zones containing a point inside polygon
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould return empty array for point outside polygon
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould handle point exactly on polygon boundary
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould handle point at polygon corner
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mMultiple Overlapping Zones[2m > [22mshould return all zones containing overlapping point
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mMultiple Overlapping Zones[2m > [22mshould return only wider zone for point in zone1 but not zone2
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "no-fly" status for location inside no-fly zone
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mMultiple Heritage Sites Detection[2m > [22mshould detect all overlapping property restrictions at coordinates
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mHindhead Common and Devil's Punch Bowl - National Trust[2m > [22mshould detect property restriction at Hindhead Common (51.1156, -0.7237)
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mHindhead Common and Devil's Punch Bowl - National Trust[2m > [22mshould NOT detect property restriction outside Hindhead boundary
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mRural Location - No Restrictions[2m > [22mshould return empty results for location without property restrictions
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mGIST Index Performance[2m > [22mshould use GIST spatial index for property queries
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mPolicy Text Validation[2m > [22mshould enforce policy_text length constraint (<=5000 chars)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould return zones within bounding box
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould return empty array for bbox with no zones
+ [32mÔ£ô[39m tests/integration/property-restrictions.test.ts[2m > [22mProperty Restrictions Integration Tests - Heritage Site Detection[2m > [22mPolicy Text Validation[2m > [22mshould accept policy_text at exactly 5000 chars
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "controlled" status for location in controlled airspace only
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "permitted" status for location outside all restricted zones
+[90mstdout[2m | tests/unit/models/PropertyRestriction.test.ts[2m > [22m[2mPropertyRestriction Model - Heritage Sites[22m[39m
+2026-02-19 18:51:25 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:25"
+}
+
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mZone Priority Hierarchy[2m > [22mshould prioritize no-fly over controlled airspace when overlapping
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould handle very small bounding box
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould find nearest TOAL site to coordinates
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould calculate distance accurately with Haversine formula
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould create property restriction with all required fields
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould fail when property_name is missing
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould fail when managing_organization is missing
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould fail when geometry is missing
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mZone Priority Hierarchy[2m > [22mshould prioritize airport-frz over military zone
+ [31m├ù[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould include nearest TOAL site when available
+[31m   ÔåÆ expected undefined to be 'c0b44c48-ec93-45b3-80d4-37895ec5bcd4' // Object.is equality[39m
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould handle no TOAL sites available
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould return null when no TOAL sites exist
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude (< -180)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude (> 180)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude (< -90)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude (> 90)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid bbox (minLng > maxLng)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid bbox (minLat > maxLat)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould handle database connection failure gracefully
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould return empty results for malformed geometry in database
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould complete point-in-polygon query within 100ms
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould complete bbox query within 100ms
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould use spatial indexes efficiently
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTemporal Filtering[2m > [22mshould exclude expired temporary restrictions
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTemporal Filtering[2m > [22mshould include active temporary restrictions
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould accept geometry as Polygon (auto-converted to MultiPolygon)
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould enforce policy_text max length 5000 chars
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mcreate - Property Creation[2m > [22mshould accept policy_text at exactly 5000 chars
+[90mstdout[2m | unknown test[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAltitude Considerations[2m > [22mshould include altitude restrictions in zone info
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould handle database errors gracefully
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindByCoordinates - Spatial Query[2m > [22mshould find property restrictions at coordinates inside geometry
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindByCoordinates - Spatial Query[2m > [22mshould return empty array for coordinates outside all geometries
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAuthorization Requirements[2m > [22mshould set authorization_required flag for controlled airspace
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindByCoordinates - Spatial Query[2m > [22mshould return all overlapping properties at coordinates
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAuthorization Requirements[2m > [22mshould not set authorization_required for no-fly zones
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindInBbox - Bounding Box Query[2m > [22mshould find all properties within bounding box
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindInBbox - Bounding Box Query[2m > [22mshould return empty array for bbox without properties
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mfindByOrganization - Organization Filter[2m > [22mshould find all properties by managing organization
+[90mstdout[2m | unknown test[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mupdate - Property Updates[2m > [22mshould update property policy_text and update last_updated timestamp
+ [32mÔ£ô[39m tests/unit/models/PropertyRestriction.test.ts[2m > [22mPropertyRestriction Model - Heritage Sites[2m > [22mdelete - Property Deletion[2m > [22mshould delete property restriction by ID
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mPerformance Requirements[2m > [22mshould complete location check within 5 seconds (FR-026)
+[90mstdout[2m | tests/unit/services/property-service.test.ts[2m > [22m[2mPropertyService - Spatial Query Tests[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 1: Prohibited (Airspace Restricted)[2m > [22mshould return flight_status "prohibited" when airspace restricted regardless of property
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 1: Prohibited (Airspace Restricted)[2m > [22mshould return flight_status "prohibited" for controlled airspace requiring authorization
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould return flight_status "check-property-restrictions" when airspace clear but property restricted
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould populate property_restrictions array with all required fields
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould include multiple property_restrictions when overlapping
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould truncate policy_summary to 200 characters
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 3: Permitted (Both Clear)[2m > [22mshould return flight_status "permitted" when airspace clear and no property restrictions
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mQuery Performance[2m > [22mshould complete location check with property query in <5 seconds (FR-026)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould detect property restriction when point is inside circular buffer (turf.circle)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould NOT detect property restriction when point is outside circular buffer
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould handle donut geometry (polygon with hole)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould detect all overlapping properties at coordinates
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould return empty array when no property restrictions at coordinates
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould handle boundary coordinates correctly
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return all properties intersecting bounding box
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return GeoJSON FeatureCollection format
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return empty array for bbox without properties
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould handle bbox partially overlapping property
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mQuery Performance and Index Usage[2m > [22mshould use GIST spatial index for point queries
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mQuery Performance and Index Usage[2m > [22mshould complete point query in reasonable time (<100ms for single property)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mqueryPropertyById - Single Property Retrieval[2m > [22mshould retrieve property restriction by ID
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mqueryPropertyById - Single Property Retrieval[2m > [22mshould return null for non-existent property ID
+[90mstdout[2m | tests/integration/multi-layer-click.test.ts[2m > [22m[2mMulti-Layer Click Integration[2m > [22m[2mshould return both zone and property restriction info when clicking on overlapping location[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+[90mstdout[2m | tests/integration/multi-layer-click.test.ts[2m > [22m[2mMulti-Layer Click Integration[2m > [22m[2mshould show property restrictions when clicking heritage site in clear airspace[22m[39m
+Ô£à Property-only click test passed: Heritage site info shown in clear airspace
+
+ [31m├ù[39m tests/integration/multi-layer-click.test.ts[2m > [22mMulti-Layer Click Integration[2m > [22mshould return both zone and property restriction info when clicking on overlapping location
+[31m   ÔåÆ expected 'EGR158 CITY OF LONDON' to be 'Test London Control Zone' // Object.is equality[39m
+ [32mÔ£ô[39m tests/integration/multi-layer-click.test.ts[2m > [22mMulti-Layer Click Integration[2m > [22mshould show property restrictions when clicking heritage site in clear airspace
+[90mstdout[2m | tests/unit/models/DataSource.test.ts[2m > [22m[2mDataSource Model[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+[90mstdout[2m | tests/integration/multi-layer-click.test.ts[2m > [22m[2mMulti-Layer Click Integration[2m > [22m[2mshould return both zone info and property info even when flight is prohibited[22m[39m
+Ô£à Multi-layer with no-fly test passed: Both layers shown even when prohibited
+
+[90mstdout[2m | tests/unit/models/DataSource.test.ts[2m > [22m[2mDataSource Model[2m > [22m[2mCRUD Operations[2m > [22m[2mshould create a new data source[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mCreated data_sources record[39m
+{
+  "id": "8f691fff-9693-4061-aa3b-e9b5ef2acb42",
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mCreated data_sources record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/integration/multi-layer-click.test.ts[2m > [22mMulti-Layer Click Integration[2m > [22mshould return both zone info and property info even when flight is prohibited
+[90mstdout[2m | tests/unit/models/DataSource.test.ts[2m > [22m[2mDataSource Model[2m > [22m[2mCRUD Operations[2m > [22m[2mshould delete a data source[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDeleted data_sources record[39m
+{
+  "id": "8f691fff-9693-4061-aa3b-e9b5ef2acb42",
+  "deleted": 1,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDeleted data_sources record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+[90mstdout[2m | tests/unit/models/DataSource.test.ts[2m > [22m[2mDataSource Model[2m > [22m[2mData Validation[2m > [22m[2mshould enforce unique authority_name[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mCreated data_sources record[39m
+{
+  "id": "0b92fc3d-9602-41ee-ab8e-c0527c8d8040",
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mCreated data_sources record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+[90mstdout[2m | tests/unit/models/DataSource.test.ts[2m > [22m[2mDataSource Model[2m > [22m[2mData Validation[2m > [22m[2mshould require primary fields[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mCreated data_sources record[39m
+{
+  "id": "dc69f7f9-1174-449e-b57e-ff4463c9a17a",
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mCreated data_sources record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mModel Configuration[2m > [22mshould have correct table name
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mModel Configuration[2m > [22mshould have correct primary key
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould create a new data source
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould find data source by ID
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould return null for non-existent ID
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould find all data sources
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould update a data source
+[31m   ÔåÆ column "last_updated" of relation "data_sources" does not exist[39m
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould count data sources
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mCRUD Operations[2m > [22mshould delete a data source
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mData Validation[2m > [22mshould enforce unique authority_name
+[31m   ÔåÆ promise resolved "{ ÔÇª(11) }" instead of rejecting[39m
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mData Validation[2m > [22mshould validate reliability_level enum values
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mData Validation[2m > [22mshould require primary fields
+[31m   ÔåÆ promise resolved "{ ÔÇª(11) }" instead of rejecting[39m
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mQuery Methods[2m > [22mshould find data source by authority name
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mQuery Methods[2m > [22mshould return null for non-existent authority name
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mQuery Methods[2m > [22mshould find data sources by reliability level
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mQuery Methods[2m > [22mshould find stale data sources (not synced recently)
+[31m   ÔåÆ invalid input syntax for type uuid: ""[39m
+[90mstdout[2m | tests/unit/models/RestrictionZone.test.ts[2m > [22m[2mRestrictionZone Model[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mQuery Methods[2m > [22mshould get all pre-seeded sources
+[31m   ÔåÆ expected [ ÔÇª(237) ] to include 'UK NOTAM Service'[39m
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mSync Timestamp Operations[2m > [22mshould update last_sync_timestamp
+[31m   ÔåÆ invalid input syntax for type uuid: ""[39m
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mSync Timestamp Operations[2m > [22mshould get time since last sync
+[31m   ÔåÆ invalid input syntax for type uuid: ""[39m
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mmapRow method[2m > [22mshould transform database row with date parsing
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mBusiness Logic[2m > [22mshould identify CAA as primary authority
+ [32mÔ£ô[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mBusiness Logic[2m > [22mshould identify NATS as primary authority
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mBusiness Logic[2m > [22mshould have correct data types for CAA
+[31m   ÔåÆ expected [ 'test' ] to include 'geographic_zones'[39m
+ [31m├ù[39m tests/unit/models/DataSource.test.ts[2m > [22mDataSource Model[2m > [22mBusiness Logic[2m > [22mshould have appropriate sync frequency
+[31m   ÔåÆ expected 'object' to be 'string' // Object.is equality[39m
+[90mstdout[2m | tests/unit/models/RestrictionZone.test.ts[2m > [22m[2mRestrictionZone Model[2m > [22m[2mCRUD Operations[2m > [22m[2mshould update a restriction zone[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mUpdated restriction_zones record[39m
+{
+  "id": "65e05c5e-8319-4caa-bafe-01b3d9d67234",
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mUpdated restriction_zones record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+[90mstdout[2m | tests/unit/models/RestrictionZone.test.ts[2m > [22m[2mRestrictionZone Model[2m > [22m[2mCRUD Operations[2m > [22m[2mshould delete a restriction zone[22m[39m
+2026-02-19 18:51:26 [[32minfo[39m]: [32mDeleted restriction_zones record[39m
+{
+  "id": "65e05c5e-8319-4caa-bafe-01b3d9d67234",
+  "deleted": 1,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDeleted restriction_zones record\u001b[39m",
+  "timestamp": "2026-02-19 18:51:26"
+}
+
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mModel Configuration[2m > [22mshould have correct table name
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mModel Configuration[2m > [22mshould have correct primary key
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould create a new restriction zone
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould find restriction zone by ID
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould return null for non-existent ID
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould find all restriction zones with conditions
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould update a restriction zone
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould count restriction zones
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mCRUD Operations[2m > [22mshould delete a restriction zone
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mData Validation[2m > [22mshould validate zone_type enum values
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mData Validation[2m > [22mshould validate altitude consistency (ceiling >= floor)
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mData Validation[2m > [22mshould validate effective date ordering for temporary restrictions
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mData Validation[2m > [22mshould require valid geometry
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mQuery Methods[2m > [22mshould find zones by type
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mQuery Methods[2m > [22mshould find active zones (no expired temporary restrictions)
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mQuery Methods[2m > [22mshould find zones by authority source
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mQuery Methods[2m > [22mshould find zones by confidence level
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mGeospatial Query Placeholders[2m > [22mshould have method to find zones containing a point
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mGeospatial Query Placeholders[2m > [22mshould have method to find zones within bounding box
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mGeospatial Query Placeholders[2m > [22mshould have method to find zones intersecting with geometry
+ [32mÔ£ô[39m tests/unit/models/RestrictionZone.test.ts[2m > [22mRestrictionZone Model[2m > [22mmapRow method[2m > [22mshould transform database row to camelCase properties
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Suites 2 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/contract/location.test.ts > GET /location/check - HTTP Contract
+error: column "data_type" of relation "data_sources" does not exist
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» tests/contract/location.test.ts:40:23
+     38| 
+     39|     // Create test data sources
+     40|     const caaResult = await pool.query(
+       |                       ^
+     41|       `INSERT INTO data_sources (authority_name, data_type, confidenceÔÇª
+     42|        VALUES ('CAA', 'geographic_zones', 'primary-authority')
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 134, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '43', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'parse_target.c', line: '1061', routine: 'checkInsertTargets' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/13]ÔÄ»
+
+ FAIL  tests/contract/zones.test.ts > GET /zones - HTTP Contract
+error: column "data_type" of relation "data_sources" does not exist
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» tests/contract/zones.test.ts:37:23
+     35| 
+     36|     // Create test data sources
+     37|     const caaResult = await pool.query(
+       |                       ^
+     38|       `INSERT INTO data_sources (authority_name, data_type, confidenceÔÇª
+     39|        VALUES ('CAA', 'geographic_zones', 'primary-authority')
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 134, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '43', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'parse_target.c', line: '1061', routine: 'checkInsertTargets' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/13]ÔÄ»
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 11 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/integration/multi-layer-click.test.ts > Multi-Layer Click Integration > should return both zone and property restriction info when clicking on overlapping location
+AssertionError: expected 'EGR158 CITY OF LONDON' to be 'Test London Control Zone' // Object.is equality
+
+- Expected
++ Received
+
+- Test London Control Zone
++ EGR158 CITY OF LONDON
+
+ ÔØ» tests/integration/multi-layer-click.test.ts:136:46
+    134|     expect(result.zones).toBeDefined();
+    135|     expect(result.zones.length).toBeGreaterThan(0);
+    136|     expect(result.zones[0].restriction_name).toBe('Test London ControlÔÇª
+       |                                              ^
+    137|     expect(result.airspace_clear).toBe(false);
+    138| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > CRUD Operations > should update a data source
+error: column "last_updated" of relation "data_sources" does not exist
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» DataSource.update src/models/BaseModel.ts:121:20
+    119|     `;
+    120| 
+    121|     const result = await this.pool.query(query, [...values, id]);
+       |                    ^
+    122|     
+    123|     if (result.rows.length === 0) {
+ ÔØ» tests/unit/models/DataSource.test.ts:85:23
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 139, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '79', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'analyze.c', line: '2466', routine: 'transformUpdateTargetList' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Data Validation > should enforce unique authority_name
+AssertionError: promise resolved "{ ÔÇª(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- [Error: rejected promise]
++ Object {
++   "attribution": "Test",
++   "authority_name": "UK Civil Aviation Authority",
++   "contact_email": null,
++   "created_at": 2026-02-19T18:51:26.763Z,
++   "data_type_provided": Array [
++     "test",
++   ],
++   "data_url": null,
++   "last_sync_timestamp": 2026-02-19T18:51:26.763Z,
++   "license": "Test",
++   "reliability_level": "primary-authority",
++   "source_id": "0b92fc3d-9602-41ee-ab8e-c0527c8d8040",
++   "sync_frequency": "daily",
++ }
+
+ ÔØ» tests/unit/models/DataSource.test.ts:124:49
+    122|       };
+    123| 
+    124|       await expect(dataSource.create(sourceData)).rejects.toThrow();
+       |                                                 ^
+    125|     });
+    126| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Data Validation > should require primary fields
+AssertionError: promise resolved "{ ÔÇª(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- [Error: rejected promise]
++ Object {
++   "attribution": "",
++   "authority_name": "Incomplete Source",
++   "contact_email": null,
++   "created_at": 2026-02-19T18:51:26.781Z,
++   "data_type_provided": Array [],
++   "data_url": null,
++   "last_sync_timestamp": 2026-02-19T18:51:26.781Z,
++   "license": null,
++   "reliability_level": "unverified",
++   "source_id": "dc69f7f9-1174-449e-b57e-ff4463c9a17a",
++   "sync_frequency": null,
++ }
+
+ ÔØ» tests/unit/models/DataSource.test.ts:146:55
+    144|       };
+    145| 
+    146|       await expect(dataSource.create(incompleteSource)).rejects.toThroÔÇª
+       |                                                       ^
+    147|     });
+    148|   });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Query Methods > should find stale data sources (not synced recently)
+error: invalid input syntax for type uuid: ""
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» tests/unit/models/DataSource.test.ts:176:7
+    174|     it('should find stale data sources (not synced recently)', async (ÔÇª
+    175|       // Update last_sync_timestamp to old date
+    176|       await dataSource.query(
+       |       ^
+    177|         `UPDATE data_sources SET last_sync_timestamp = NOW() - INTERVAÔÇª
+    178|         [testSourceId]
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 129, severity: 'ERROR', code: '22P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $1 = \'\'', schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'uuid.c', line: '133', routine: 'string_to_uuid' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Query Methods > should get all pre-seeded sources
+AssertionError: expected [ ÔÇª(237) ] to include 'UK NOTAM Service'
+ ÔØ» tests/unit/models/DataSource.test.ts:197:27
+    195|       expect(sourceNames).toContain('UK Civil Aviation Authority');
+    196|       expect(sourceNames).toContain('NATS AIS');
+    197|       expect(sourceNames).toContain('UK NOTAM Service');
+       |                           ^
+    198|     });
+    199|   });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Sync Timestamp Operations > should update last_sync_timestamp
+error: invalid input syntax for type uuid: ""
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» DataSource.updateSyncTimestamp src/models/DataSource.ts:79:5
+     77|       WHERE ${this.primaryKey} = $1
+     78|     `;
+     79|     await this.query(query, [sourceId]);
+       |     ^
+     80|   }
+     81| 
+ ÔØ» tests/unit/models/DataSource.test.ts:205:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 129, severity: 'ERROR', code: '22P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $1 = \'\'', schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'uuid.c', line: '133', routine: 'string_to_uuid' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[9/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Sync Timestamp Operations > should get time since last sync
+error: invalid input syntax for type uuid: ""
+ ÔØ» node_modules/pg-pool/index.js:45:11
+ ÔØ» tests/unit/models/DataSource.test.ts:217:7
+    215|     it('should get time since last sync', async () => {
+    216|       // Update to known old timestamp
+    217|       await dataSource.query(
+       |       ^
+    218|         `UPDATE data_sources SET last_sync_timestamp = NOW() - INTERVAÔÇª
+    219|         [testSourceId]
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+Serialized Error: { length: 129, severity: 'ERROR', code: '22P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $1 = \'\'', schema: undefined, table: undefined, column: undefined, dataType: undefined, constraint: undefined, file: 'uuid.c', line: '133', routine: 'string_to_uuid' }
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[10/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Business Logic > should have correct data types for CAA
+AssertionError: expected [ 'test' ] to include 'geographic_zones'
+ ÔØ» tests/unit/models/DataSource.test.ts:269:39
+    267|       const caa = await dataSource.findByName('UK Civil Aviation AuthoÔÇª
+    268|       expect(caa?.data_type_provided).toBeInstanceOf(Array);
+    269|       expect(caa?.data_type_provided).toContain('geographic_zones');
+       |                                       ^
+    270|     });
+    271| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[11/13]ÔÄ»
+
+ FAIL  tests/unit/models/DataSource.test.ts > DataSource Model > Business Logic > should have appropriate sync frequency
+AssertionError: expected 'object' to be 'string' // Object.is equality
+
+- Expected
++ Received
+
+- string
++ object
+
+ ÔØ» tests/unit/models/DataSource.test.ts:277:46
+    275|       sources.forEach((source) => {
+    276|         expect(source.sync_frequency).toBeDefined();
+    277|         expect(typeof source.sync_frequency).toBe('string');
+       |                                              ^
+    278|         expect(source.sync_frequency.length).toBeGreaterThan(0);
+    279|       });
+ ÔØ» tests/unit/models/DataSource.test.ts:275:15
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[12/13]ÔÄ»
+
+ FAIL  tests/unit/services/location-service.test.ts > LocationService - SAFETY CRITICAL > TOAL Site Integration > should include nearest TOAL site when available
+AssertionError: expected undefined to be 'c0b44c48-ec93-45b3-80d4-37895ec5bcd4' // Object.is equality
+
+- Expected: 
+"c0b44c48-ec93-45b3-80d4-37895ec5bcd4"
+
++ Received: 
+undefined
+
+ ÔØ» tests/unit/services/location-service.test.ts:290:44
+    288| 
+    289|       expect(status.nearest_toal).toBeDefined();
+    290|       expect(status.nearest_toal?.site_id).toBe(result.rows[0].site_idÔÇª
+       |                                            ^
+    291|       expect(status.nearest_toal?.distance_meters).toBeGreaterThan(0);
+    292|     });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[13/13]ÔÄ»
+
+[2m Test Files [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m11 failed[39m[22m[2m | [22m[1m[32m122 passed[39m[22m[90m (167)[39m
+[2m   Start at [22m 18:51:24
+[2m   Duration [22m 2.30s[2m (transform 1.05s, setup 0ms, collect 5.14s, tests 2.35s, environment 7ms, prepare 2.99s)[22m
+

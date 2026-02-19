@@ -1,0 +1,150 @@
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/miked/Downloads/DroneGo/backend[39m
+[2m      Coverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/services/geospatial-service.test.ts[2m > [22m[2mGeospatialService - SAFETY CRITICAL[22m[39m
+2026-02-19 19:00:04 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 19:00:04"
+}
+
+[90mstdout[2m | tests/unit/services/location-service.test.ts[2m > [22m[2mLocationService - SAFETY CRITICAL[22m[39m
+2026-02-19 19:00:04 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 19:00:04"
+}
+
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "no-fly" status for location inside no-fly zone
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould find zones containing a point inside polygon
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould return empty array for point outside polygon
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould handle point exactly on polygon boundary
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPoint-in-Polygon Queries[2m > [22mshould handle point at polygon corner
+ [31m├ù[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mMultiple Overlapping Zones[2m > [22mshould return all zones containing overlapping point
+[31m   ÔåÆ expected [ ÔÇª(5) ] to include '78a90fa8-82a2-4f1a-938c-2e8ef2454566'[39m
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mMultiple Overlapping Zones[2m > [22mshould return only wider zone for point in zone1 but not zone2
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould return zones within bounding box
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "controlled" status for location in controlled airspace only
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mRestriction Status Determination[2m > [22mshould return "permitted" status for location outside all restricted zones
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mZone Priority Hierarchy[2m > [22mshould prioritize no-fly over controlled airspace when overlapping
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mZone Priority Hierarchy[2m > [22mshould prioritize airport-frz over military zone
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould return empty array for bbox with no zones
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mBounding Box Queries[2m > [22mshould handle very small bounding box
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould include nearest TOAL site when available
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould handle no TOAL sites available
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTemporal Filtering[2m > [22mshould exclude expired temporary restrictions
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTemporal Filtering[2m > [22mshould include active temporary restrictions
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAltitude Considerations[2m > [22mshould include altitude restrictions in zone info
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould handle database errors gracefully
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould find nearest TOAL site to coordinates
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould calculate distance accurately with Haversine formula
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mDistance Calculations[2m > [22mshould return null when no TOAL sites exist
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude (< -180)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid longitude (> 180)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude (< -90)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid latitude (> 90)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid bbox (minLng > maxLng)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mInput Validation[2m > [22mshould reject invalid bbox (minLat > maxLat)
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould handle database connection failure gracefully
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mError Handling[2m > [22mshould return empty results for malformed geometry in database
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould complete point-in-polygon query within 100ms
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould complete bbox query within 100ms
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mPerformance and Optimization[2m > [22mshould use spatial indexes efficiently
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mCoordinate Validation - Bounding Box[2m > [22mshould validate bounding box with valid coordinates
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mCoordinate Validation - Bounding Box[2m > [22mshould reject bounding box where minLng >= maxLng
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mCoordinate Validation - Bounding Box[2m > [22mshould reject bounding box where minLat >= maxLat
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mCoordinate Validation - Bounding Box[2m > [22mshould reject bounding box with invalid corner coordinates
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts[2m > [22mGeospatialService - SAFETY CRITICAL[2m > [22mTOAL Site Error Handling[2m > [22mshould wrap database errors in findNearestToalSite
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAuthorization Requirements[2m > [22mshould set authorization_required flag for controlled airspace
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mAuthorization Requirements[2m > [22mshould not set authorization_required for no-fly zones
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mPerformance Requirements[2m > [22mshould complete location check within 5 seconds (FR-026)
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 1: Prohibited (Airspace Restricted)[2m > [22mshould return flight_status "prohibited" when airspace restricted regardless of property
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 1: Prohibited (Airspace Restricted)[2m > [22mshould return flight_status "prohibited" for controlled airspace requiring authorization
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould return flight_status "check-property-restrictions" when airspace clear but property restricted
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould populate property_restrictions array with all required fields
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould include multiple property_restrictions when overlapping
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 2: Check Property Restrictions (Airspace Clear + Property Restricted)[2m > [22mshould truncate policy_summary to 200 characters
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mState 3: Permitted (Both Clear)[2m > [22mshould return flight_status "permitted" when airspace clear and no property restrictions
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mQuery Performance[2m > [22mshould complete location check with property query in <5 seconds (FR-026)
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mError Handling[2m > [22mshould re-throw coordinate validation errors from geospatial service
+ [32mÔ£ô[39m tests/unit/services/location-service.test.ts[2m > [22mLocationService - Tri-State Logic (User Story 1)[2m > [22mError Handling[2m > [22mshould wrap non-validation database errors with location context
+[90mstdout[2m | tests/unit/services/property-service.test.ts[2m > [22m[2mPropertyService - Spatial Query Tests[22m[39m
+2026-02-19 19:00:05 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 19:00:05"
+}
+
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould detect property restriction when point is inside circular buffer (turf.circle)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould NOT detect property restriction when point is outside circular buffer
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould handle donut geometry (polygon with hole)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould detect all overlapping properties at coordinates
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould return empty array when no property restrictions at coordinates
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mcheckPropertyRestrictions - Point Detection[2m > [22mshould handle boundary coordinates correctly
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return all properties intersecting bounding box
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return GeoJSON FeatureCollection format
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould return empty array for bbox without properties
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertyRestrictionsByBbox - Viewport Queries[2m > [22mshould handle bbox partially overlapping property
+ [31m├ù[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mQuery Performance and Index Usage[2m > [22mshould use GIST spatial index for point queries
+[31m   ÔåÆ expected '{"QUERY PLAN":[{"Plan":{"Node Type":"ÔÇª' to match /idx_property_restrictions_geom|IndexÔÇª/i[39m
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mQuery Performance and Index Usage[2m > [22mshould complete point query in reasonable time (<100ms for single property)
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mqueryPropertyById - Single Property Retrieval[2m > [22mshould retrieve property restriction by ID
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mqueryPropertyById - Single Property Retrieval[2m > [22mshould return null for non-existent property ID
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mgetPropertiesByOrganization - Organization Query[2m > [22mshould retrieve all properties managed by specific organization
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mtruncatePolicyText - Text Truncation[2m > [22mshould return empty string for null policy text
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mtruncatePolicyText - Text Truncation[2m > [22mshould return original text when shorter than max length
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts[2m > [22mPropertyService - Spatial Query Tests[2m > [22mtruncatePolicyText - Text Truncation[2m > [22mshould truncate long text and add ellipsis
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 2 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/unit/services/geospatial-service.test.ts > GeospatialService - SAFETY CRITICAL > Multiple Overlapping Zones > should return all zones containing overlapping point
+AssertionError: expected [ ÔÇª(5) ] to include '78a90fa8-82a2-4f1a-938c-2e8ef2454566'
+ ÔØ» tests/unit/services/geospatial-service.test.ts:249:23
+    247|       
+    248|       const zoneIds = zones.map((z: ZoneResult) => z.zone_id);
+    249|       expect(zoneIds).toContain(zone1Id);
+       |                       ^
+    250|       expect(zoneIds).toContain(zone2Id);
+    251|     });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/2]ÔÄ»
+
+ FAIL  tests/unit/services/property-service.test.ts > PropertyService - Spatial Query Tests > Query Performance and Index Usage > should use GIST spatial index for point queries
+AssertionError: expected '{"QUERY PLAN":[{"Plan":{"Node Type":"ÔÇª' to match /idx_property_restrictions_geom|IndexÔÇª/i
+
+- Expected: 
+/idx_property_restrictions_geom|Index.*property_restrictions/i
+
++ Received: 
+"{\"QUERY PLAN\":[{\"Plan\":{\"Node Type\":\"Seq Scan\",\"Parallel Aware\":false,\"Async Capable\":false,\"Relation Name\":\"property_restrictions\",\"Alias\":\"property_restrictions\",\"Startup Cost\":0,\"Total Cost\":1,\"Plan Rows\":1,\"Plan Width\":27,\"Filter\":\"st_intersects(geometry, '0101000020E6100000000000000000F0BF0000000000804940'::geometry)\"}}]}"
+
+ ÔØ» tests/unit/services/property-service.test.ts:404:20
+    402| 
+    403|       const plan = JSON.stringify(explainResult.rows[0]);
+    404|       expect(plan).toMatch(/idx_property_restrictions_geom|Index.*propÔÇª
+       |                    ^
+    405|     });
+    406| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/2]ÔÄ»
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m70 passed[39m[22m[90m (72)[39m
+[2m   Start at [22m 19:00:04
+[2m   Duration [22m 1.56s[2m (transform 221ms, setup 0ms, collect 1.38s, tests 985ms, environment 1ms, prepare 593ms)[22m
+

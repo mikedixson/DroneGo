@@ -558,4 +558,58 @@ describe('GeospatialService - SAFETY CRITICAL', () => {
       expect(plan.toLowerCase()).toContain('index');
     });
   });
+
+  describe('Coordinate Validation - Bounding Box', () => {
+    it('should validate bounding box with valid coordinates', async () => {
+      // Test line 247-265: validateBounds method
+      // This should not throw for valid bounds
+      await expect(
+        service.findZonesWithinBounds(-1.0, 51.0, -0.5, 51.5)
+      ).resolves.toBeDefined();
+    });
+
+    it('should reject bounding box where minLng >= maxLng', async () => {
+      // Test line 256-259: minLng >= maxLng validation
+      await expect(
+        service.findZonesWithinBounds(-0.5, 51.0, -1.0, 51.5)
+      ).rejects.toThrow(/minLng.*must be less than maxLng/);
+    });
+
+    it('should reject bounding box where minLat >= maxLat', async () => {
+      // Test line 260-263: minLat >= maxLat validation
+      await expect(
+        service.findZonesWithinBounds(-1.0, 51.5, -0.5, 51.0)
+      ).rejects.toThrow(/minLat.*must be less than maxLat/);
+    });
+
+    it('should reject bounding box with invalid corner coordinates', async () => {
+      // Test that validateBounds calls validateCoordinates for all corners
+      await expect(
+        service.findZonesWithinBounds(999, 51.0, -0.5, 51.5)
+      ).rejects.toThrow(/longitude/);
+      
+      await expect(
+        service.findZonesWithinBounds(-1.0, 999, -0.5, 51.5)
+      ).rejects.toThrow(/latitude/);
+    });
+  });
+
+  describe('TOAL Site Error Handling', () => {
+    it('should wrap database errors in findNearestToalSite', async () => {
+      // Test line 210-214: Error wrapping in findNearestToalSite
+      const originalPool = service['pool'];
+      
+      // Mock a database failure
+      (service as any).pool = {
+        query: () => { throw new Error('Database query failed'); }
+      };
+      
+      await expect(
+        service.findNearestToalSite(-0.1, 51.5, 5)
+      ).rejects.toThrow(/Failed to find nearest TOAL site/);
+      
+      // Restore original pool
+      (service as any).pool = originalPool;
+    });
+  });
 });

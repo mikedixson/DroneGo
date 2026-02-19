@@ -1,0 +1,83 @@
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/miked/Downloads/DroneGo/backend[39m
+[2m      Coverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/services/geospatial-service.test.ts[2m > [22m[2mGeospatialService - SAFETY CRITICAL[22m[39m
+2026-02-19 18:56:59 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:56:59"
+}
+
+[90mstdout[2m | tests/unit/services/location-service.test.ts[2m > [22m[2mLocationService - SAFETY CRITICAL[22m[39m
+2026-02-19 18:56:59 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:56:59"
+}
+
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts [2m ([22m[2m28 tests[22m[2m)[22m[90m 181[2mms[22m[39m
+ [33mÔØ»[39m tests/unit/services/location-service.test.ts [2m ([22m[2m26 tests[22m [2m|[22m [31m2 failed[39m[2m)[22m[33m 330[2mms[22m[39m
+[31m   [33mÔØ»[31m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould include nearest TOAL site when available[39m
+[31m     ÔåÆ expected undefined to be '52bd742b-365c-415e-b934-0deb8052d93a' // Object.is equality[39m
+[31m   [33mÔØ»[31m tests/unit/services/location-service.test.ts[2m > [22mLocationService - SAFETY CRITICAL[2m > [22mTOAL Site Integration[2m > [22mshould handle no TOAL sites available[39m
+[31m     ÔåÆ expected { ÔÇª(6) } to be null[39m
+[90mstdout[2m | tests/unit/services/property-service.test.ts[2m > [22m[2mPropertyService - Spatial Query Tests[22m[39m
+2026-02-19 18:57:00 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 18:57:00"
+}
+
+ [32mÔ£ô[39m tests/unit/services/property-service.test.ts [2m ([22m[2m18 tests[22m[2m)[22m[90m 109[2mms[22m[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 2 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/unit/services/location-service.test.ts > LocationService - SAFETY CRITICAL > TOAL Site Integration > should include nearest TOAL site when available
+AssertionError: expected undefined to be '52bd742b-365c-415e-b934-0deb8052d93a' // Object.is equality
+
+- Expected: 
+"52bd742b-365c-415e-b934-0deb8052d93a"
+
++ Received: 
+undefined
+
+ ÔØ» tests/unit/services/location-service.test.ts:290:44
+    288| 
+    289|       expect(status.nearest_toal).toBeDefined();
+    290|       expect(status.nearest_toal?.site_id).toBe(result.rows[0].site_idÔÇª
+       |                                            ^
+    291|       expect(status.nearest_toal?.distance_meters).toBeGreaterThan(0);
+    292|     });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/2]ÔÄ»
+
+ FAIL  tests/unit/services/location-service.test.ts > LocationService - SAFETY CRITICAL > TOAL Site Integration > should handle no TOAL sites available
+AssertionError: expected { ÔÇª(6) } to be null
+ ÔØ» tests/unit/services/location-service.test.ts:299:35
+    297|       const status = await service.checkLocation(-30.0, 0.0); // RemotÔÇª
+    298| 
+    299|       expect(status.nearest_toal).toBeNull();
+       |                                   ^
+    300|     });
+    301|   });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/2]ÔÄ»
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m70 passed[39m[22m[90m (72)[39m
+[2m   Start at [22m 18:56:59
+[2m   Duration [22m 1.29s[2m (transform 213ms, setup 0ms, collect 1.23s, tests 620ms, environment 1ms, prepare 517ms)[22m
+

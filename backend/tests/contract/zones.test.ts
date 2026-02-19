@@ -35,19 +35,15 @@ describe('GET /zones - HTTP Contract', () => {
 
     // Create test data sources
     const caaResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('CAA', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level, attribution, license, sync_frequency)
+       VALUES ('CAA', ARRAY['geographic_zones'], 'primary-authority', 'Test', 'Test', 'daily')
        RETURNING source_id`
     );
     testDataSourceIds['CAA'] = caaResult.rows[0].source_id;
 
     const natsResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level, last_update)
-       VALUES ('NATS', 'geographic_zones', 'primary-authority', NOW() - INTERVAL '2 hours')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET 
-         confidence_level = 'primary-authority',
-         last_update = NOW() - INTERVAL '2 hours'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level, attribution, license, sync_frequency, last_sync_timestamp)
+       VALUES ('NATS', ARRAY['geographic_zones'], 'primary-authority', 'Test', 'Test', 'daily', NOW() - INTERVAL '2 hours')
        RETURNING source_id`
     );
     testDataSourceIds['NATS'] = natsResult.rows[0].source_id;
@@ -57,6 +53,8 @@ describe('GET /zones - HTTP Contract', () => {
     if (testZoneIds.length > 0) {
       await pool.query('DELETE FROM restriction_zones WHERE zone_id = ANY($1)', [testZoneIds]);
     }
+    // Clean up test data sources
+    await pool.query("DELETE FROM data_sources WHERE authority_name IN ('CAA', 'NATS') AND attribution = 'Test'");
   });
 
   beforeEach(async () => {
@@ -68,13 +66,13 @@ describe('GET /zones - HTTP Contract', () => {
     it('should return 200 OK for valid bounds query', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.status).toBe(200);
     });
 
     it('should return 400 Bad Request for missing bounds parameters', async () => {
-      const response = await request(app).get('/zones').query({ minLng: -0.5, minLat: 51.5 });
+      const response = await request(app).get('/zones').query({ minLng: -6.0, minLat: 54.0 });
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
@@ -83,7 +81,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should return 400 Bad Request for invalid coordinate ranges', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -200, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -200, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/longitude/i);
@@ -92,7 +90,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should return 400 Bad Request for inverted bounds (minLng > maxLng)', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.4, minLat: 51.5, maxLng: -0.5, maxLat: 51.6 });
+        .query({ minLng: -5.9, minLat: 54.0, maxLng: -6.0, maxLat: 54.1 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/minLng.*maxLng/i);
@@ -113,7 +111,7 @@ describe('GET /zones - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-6.0, 54.0], [-6.0, 54.1], [-5.9, 54.1], [-5.9, 54.0], [-6.0, 54.0]]],
           }),
           testDataSourceIds['CAA'],
         ]
@@ -124,7 +122,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should return GeoJSON FeatureCollection format (FR-002)', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('type', 'FeatureCollection');
@@ -135,7 +133,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should include required GeoJSON Feature properties', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.body.features.length).toBeGreaterThan(0);
       const feature = response.body.features[0];
@@ -155,7 +153,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should include data freshness metadata (FR-008)', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.body).toHaveProperty('metadata');
       expect(response.body.metadata).toHaveProperty('query_timestamp');
@@ -166,7 +164,7 @@ describe('GET /zones - HTTP Contract', () => {
     it('should include data source freshness info for each authority', async () => {
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       const dataSources = response.body.metadata.data_sources;
       expect(dataSources.length).toBeGreaterThan(0);
@@ -193,7 +191,7 @@ describe('GET /zones - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-6.0, 54.0], [-6.0, 54.1], [-5.9, 54.1], [-5.9, 54.0], [-6.0, 54.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
@@ -213,7 +211,7 @@ describe('GET /zones - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.48, 51.52], [-0.48, 51.58], [-0.42, 51.58], [-0.42, 51.52], [-0.48, 51.52]]],
+            coordinates: [[[-5.98, 54.02], [-5.98, 54.08], [-5.92, 54.08], [-5.92, 54.02], [-5.98, 54.02]]],
           }),
           testDataSourceIds['CAA'],
         ]
@@ -225,10 +223,10 @@ describe('GET /zones - HTTP Contract', () => {
       const response = await request(app)
         .get('/zones')
         .query({
-          minLng: -0.5,
-          minLat: 51.5,
-          maxLng: -0.4,
-          maxLat: 51.6,
+          minLng: -6.0,
+          minLat: 54.0,
+          maxLng: -5.9,
+          maxLat: 54.1,
           zoneTypes: 'no-fly',
         });
 
@@ -241,10 +239,10 @@ describe('GET /zones - HTTP Contract', () => {
       const response = await request(app)
         .get('/zones')
         .query({
-          minLng: -0.5,
-          minLat: 51.5,
-          maxLng: -0.4,
-          maxLat: 51.6,
+          minLng: -6.0,
+          minLat: 54.0,
+          maxLng: -5.9,
+          maxLat: 54.1,
           zoneTypes: 'no-fly,controlled-airspace',
         });
 
@@ -268,7 +266,7 @@ describe('GET /zones - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-6.0, 54.0], [-6.0, 54.1], [-5.9, 54.1], [-5.9, 54.0], [-6.0, 54.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
@@ -277,7 +275,7 @@ describe('GET /zones - HTTP Contract', () => {
 
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       expect(response.status).toBe(200);
       // Should not include expired zone (only 2 active zones)
@@ -300,7 +298,7 @@ describe('GET /zones - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-6.0, 54.0], [-6.0, 54.1], [-5.9, 54.1], [-5.9, 54.0], [-6.0, 54.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
@@ -310,10 +308,10 @@ describe('GET /zones - HTTP Contract', () => {
       const response = await request(app)
         .get('/zones')
         .query({
-          minLng: -0.5,
-          minLat: 51.5,
-          maxLng: -0.4,
-          maxLat: 51.6,
+          minLng: -6.0,
+          minLat: 54.0,
+          maxLng: -5.9,
+          maxLat: 54.1,
           includeExpired: 'true',
         });
 
@@ -328,7 +326,7 @@ describe('GET /zones - HTTP Contract', () => {
       // Note: We can't actually close the pool as it's shared across tests
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
 
       // With valid bounds, should succeed
       expect(response.status).toBe(200);
@@ -340,7 +338,7 @@ describe('GET /zones - HTTP Contract', () => {
       const startTime = Date.now();
       const response = await request(app)
         .get('/zones')
-        .query({ minLng: -0.5, minLat: 51.5, maxLng: -0.4, maxLat: 51.6 });
+        .query({ minLng: -6.0, minLat: 54.0, maxLng: -5.9, maxLat: 54.1 });
       const duration = Date.now() - startTime;
 
       expect(response.status).toBe(200);

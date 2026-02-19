@@ -38,17 +38,15 @@ describe('GET /location/check - HTTP Contract', () => {
 
     // Create test data sources
     const caaResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('CAA', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level, attribution, license, sync_frequency)
+       VALUES ('CAA', ARRAY['geographic_zones'], 'primary-authority', 'Test', 'Test', 'daily')
        RETURNING source_id`
     );
     testDataSourceIds['CAA'] = caaResult.rows[0].source_id;
 
     const natsResult = await pool.query(
-      `INSERT INTO data_sources (authority_name, data_type, confidence_level)
-       VALUES ('NATS', 'geographic_zones', 'primary-authority')
-       ON CONFLICT (authority_name, data_type) DO UPDATE SET confidence_level = 'primary-authority'
+      `INSERT INTO data_sources (authority_name, data_type_provided, reliability_level, attribution, license, sync_frequency)
+       VALUES ('NATS', ARRAY['geographic_zones'], 'primary-authority', 'Test', 'Test', 'daily')
        RETURNING source_id`
     );
     testDataSourceIds['NATS'] = natsResult.rows[0].source_id;
@@ -61,6 +59,8 @@ describe('GET /location/check - HTTP Contract', () => {
     if (testToalIds.length > 0) {
       await pool.query('DELETE FROM toal_sites WHERE site_id = ANY($1)', [testToalIds]);
     }
+    // Clean up test data sources
+    await pool.query("DELETE FROM data_sources WHERE authority_name IN ('CAA', 'NATS') AND attribution = 'Test'");
   });
 
   beforeEach(async () => {
@@ -72,34 +72,34 @@ describe('GET /location/check - HTTP Contract', () => {
 
   describe('Response Status Codes', () => {
     it('should return 200 OK for valid coordinates', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
     });
 
     it('should return 400 Bad Request for missing lng parameter', async () => {
-      const response = await request(app).get('/location/check').query({ lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lat: 54.05 });
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
     });
 
     it('should return 400 Bad Request for missing lat parameter', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -0.13 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95 });
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
     });
 
     it('should return 400 Bad Request for invalid longitude', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -200, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -200, lat: 54.05 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/longitude/i);
     });
 
     it('should return 400 Bad Request for invalid latitude', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 100 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 100 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/latitude/i);
@@ -130,7 +130,7 @@ describe('GET /location/check - HTTP Contract', () => {
 
   describe('Restriction Status Logic', () => {
     it('should return "permitted" status for location outside all zones', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.restriction_status).toBe('permitted');
@@ -183,7 +183,7 @@ describe('GET /location/check - HTTP Contract', () => {
         [
           JSON.stringify({
             type: 'Polygon',
-            coordinates: [[[-0.5, 51.5], [-0.5, 51.6], [-0.4, 51.6], [-0.4, 51.5], [-0.5, 51.5]]],
+            coordinates: [[[-6.0, 54.0], [-6.0, 54.1], [-5.9, 54.1], [-5.9, 54.0], [-6.0, 54.0]]],
           }),
           testDataSourceIds['NATS'],
         ]
@@ -192,7 +192,7 @@ describe('GET /location/check - HTTP Contract', () => {
 
       const response = await request(app)
         .get('/location/check')
-        .query({ lng: -0.45, lat: 51.55 });
+        .query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.restriction_status).toBe('controlled');
@@ -210,11 +210,11 @@ describe('GET /location/check - HTTP Contract', () => {
           'Test TOAL', ST_SetSRID(ST_MakePoint($1, $2), 4326),
           'public', true, 'test'
         ) RETURNING site_id`,
-        [-0.1278, 51.5074]
+        [-5.94, 54.04]
       );
       testToalIds.push(result.rows[0].site_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.nearest_toal).not.toBeNull();
@@ -226,7 +226,7 @@ describe('GET /location/check - HTTP Contract', () => {
     it('should return null for nearest_toal when no sites exist', async () => {
       await pool.query('DELETE FROM toal_sites');
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.nearest_toal).toBeNull();
@@ -253,11 +253,11 @@ describe('GET /location/check - HTTP Contract', () => {
               type: 'Polygon',
               coordinates: [
                 [
-                  [-0.5 + offset, 51.5 + offset],
-                  [-0.5 + offset, 51.6 + offset],
-                  [-0.4 + offset, 51.6 + offset],
-                  [-0.4 + offset, 51.5 + offset],
-                  [-0.5 + offset, 51.5 + offset],
+                  [-6.0 + offset, 54.0 + offset],
+                  [-6.0 + offset, 54.1 + offset],
+                  [-5.9 + offset, 54.1 + offset],
+                  [-5.9 + offset, 54.0 + offset],
+                  [-6.0 + offset, 54.0 + offset],
                 ],
               ],
             }),
@@ -268,7 +268,7 @@ describe('GET /location/check - HTTP Contract', () => {
       }
 
       const startTime = Date.now();
-      const response = await request(app).get('/location/check').query({ lng: -0.45, lat: 51.55 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
       const duration = Date.now() - startTime;
 
       expect(response.status).toBe(200);
@@ -313,7 +313,7 @@ describe('GET /location/check - HTTP Contract', () => {
     });
 
     it('should return flight_status "permitted" when airspace clear and no property restrictions', async () => {
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.flight_status).toBe('permitted');
@@ -339,11 +339,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-5.96, 54.04],
+                [-5.96, 54.06],
+                [-5.94, 54.06],
+                [-5.94, 54.04],
+                [-5.96, 54.04],
               ],
             ],
           }),
@@ -352,7 +352,7 @@ describe('GET /location/check - HTTP Contract', () => {
       );
       testZoneIds.push(result.rows[0].zone_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.flight_status).toBe('prohibited');
@@ -380,11 +380,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-5.96, 54.04],
+                [-5.96, 54.06],
+                [-5.94, 54.06],
+                [-5.94, 54.04],
+                [-5.96, 54.04],
               ],
             ],
           }),
@@ -393,7 +393,7 @@ describe('GET /location/check - HTTP Contract', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.flight_status).toBe('check-property-restrictions');
@@ -422,11 +422,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-5.96, 54.04],
+                [-5.96, 54.06],
+                [-5.94, 54.06],
+                [-5.94, 54.04],
+                [-5.96, 54.04],
               ],
             ],
           }),
@@ -435,7 +435,7 @@ describe('GET /location/check - HTTP Contract', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.property_restrictions).toBeDefined();
@@ -470,11 +470,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.15, 51.49],
-                [-0.15, 51.53],
-                [-0.11, 51.53],
-                [-0.11, 51.49],
-                [-0.15, 51.49],
+                [-5.97, 54.03],
+                [-5.97, 54.07],
+                [-5.93, 54.07],
+                [-5.93, 54.03],
+                [-5.97, 54.03],
               ],
             ],
           }),
@@ -497,11 +497,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-5.96, 54.04],
+                [-5.96, 54.06],
+                [-5.94, 54.06],
+                [-5.94, 54.04],
+                [-5.96, 54.04],
               ],
             ],
           }),
@@ -510,7 +510,7 @@ describe('GET /location/check - HTTP Contract', () => {
       );
       testPropertyIds.push(property2.rows[0].property_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       expect(response.body.flight_status).toBe('check-property-restrictions');
@@ -538,11 +538,11 @@ describe('GET /location/check - HTTP Contract', () => {
             type: 'Polygon',
             coordinates: [
               [
-                [-0.14, 51.50],
-                [-0.14, 51.52],
-                [-0.12, 51.52],
-                [-0.12, 51.50],
-                [-0.14, 51.50],
+                [-5.96, 54.04],
+                [-5.96, 54.06],
+                [-5.94, 54.06],
+                [-5.94, 54.04],
+                [-5.96, 54.04],
               ],
             ],
           }),
@@ -552,7 +552,7 @@ describe('GET /location/check - HTTP Contract', () => {
       );
       testPropertyIds.push(propertyResult.rows[0].property_id);
 
-      const response = await request(app).get('/location/check').query({ lng: -0.13, lat: 51.51 });
+      const response = await request(app).get('/location/check').query({ lng: -5.95, lat: 54.05 });
 
       expect(response.status).toBe(200);
       const advisory = response.body.property_restrictions[0];
