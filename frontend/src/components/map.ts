@@ -129,6 +129,12 @@ export class DroneGoMap {
     };
 
     try {
+      // Clear all layers before loading new data
+      // This prevents controlled-airspace zones from being cleared by displayAirspace
+      this.zonesLayer.clearLayers();
+      this.airspaceLayer.clearLayers();
+      this.toalLayer.clearLayers();
+      
       // Load zones, airspace, TOAL sites, and property restrictions in parallel
       const [zonesData, airspaceData, toalData] = await Promise.all([
         apiClient.getZones(boundsCoords),
@@ -158,20 +164,23 @@ export class DroneGoMap {
    * Display restriction zones on the map
    */
   private displayZones(data: any): void {
-    // Clear existing zones
-    this.zonesLayer.clearLayers();
-
+    // Note: Layers are cleared in loadMapData() before this is called
+    
     if (!data.features || data.features.length === 0) {
       console.log('⚠️ No zone features to display');
       return;
     }
 
     console.log(`📍 Rendering ${data.features.length} zone features...`);
+    
+    let zonesLayerCount = 0;
+    let airspaceLayerCount = 0;
 
     // Add each zone to the map
     data.features.forEach((feature: any) => {
       const zoneType = feature.properties.zone_type;
       const isTemporary = zoneType === 'temporary-restriction';
+      const isControlledAirspace = zoneType === 'controlled-airspace';
 
       // Color coding by zone type
       const colors: Record<string, string> = {
@@ -205,9 +214,21 @@ export class DroneGoMap {
         style.weight = 3; // Thicker border for emphasis
       }
 
-      // Create GeoJSON layer (T034: assign to airspaceRestrictionsPane)
+      // Controlled airspace gets more subtle styling (like dedicated airspace)
+      if (isControlledAirspace) {
+        style.opacity = 0.6;
+        style.fillOpacity = 0.2;
+        style.dashArray = '5, 5'; // Dashed to differentiate from hard restrictions
+      }
+
+      // Determine which pane and layer to use
+      // BUG FIX: Controlled airspace zones should be added to airspaceLayer, not zonesLayer
+      const targetLayer = isControlledAirspace ? this.airspaceLayer : this.zonesLayer;
+      const targetPane = 'airspaceRestrictionsPane'; // All use same pane for consistent z-index
+
+      // Create GeoJSON layer
       const geoJsonLayer = L.geoJSON(feature, {
-        pane: 'airspaceRestrictionsPane',
+        pane: targetPane,
         style: style,
       });
 
@@ -244,20 +265,26 @@ export class DroneGoMap {
         }
       });
 
-      // Add to layer
-      geoJsonLayer.addTo(this.zonesLayer);
+      // Add to appropriate layer based on zone type
+      geoJsonLayer.addTo(targetLayer);
+      
+      if (isControlledAirspace) {
+        airspaceLayerCount++;
+      } else {
+        zonesLayerCount++;
+      }
     });
     
-    console.log(`✅ Added ${data.features.length} zone features to zonesLayer (pane: airspaceRestrictionsPane)`);
+    console.log(`✅ Distributed zones: ${zonesLayerCount} to Restriction Zones layer, ${airspaceLayerCount} to Airspace Classes layer`);
   }
 
   /**
    * Display airspace classifications on the map
    */
   private displayAirspace(data: any): void {
-    // Clear existing airspace
-    this.airspaceLayer.clearLayers();
-
+    // Note: Layers are cleared in loadMapData() before this is called
+    // This allows controlled-airspace zones from displayZones() to remain
+    
     if (!data.features || data.features.length === 0) {
       console.log('⚠️ No airspace features to display');
       return;
@@ -339,8 +366,7 @@ export class DroneGoMap {
    * Display TOAL (Take-Off And Landing) sites on the map
    */
   private displayTOAL(data: any): void {
-    // Clear existing TOAL markers
-    this.toalLayer.clearLayers();
+    // Note: Layers are cleared in loadMapData() before this is called
 
     if (!data.features || data.features.length === 0) {
       return;

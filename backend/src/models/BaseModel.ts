@@ -14,6 +14,7 @@ export abstract class BaseModel<T extends BaseModelAttributes> {
   protected pool: Pool;
   protected abstract tableName: string;
   protected abstract primaryKey: string;
+  protected timestampColumn: string | null = 'last_updated'; // Override in subclass if needed
 
   constructor() {
     this.pool = getDbPool();
@@ -111,9 +112,14 @@ export abstract class BaseModel<T extends BaseModelAttributes> {
     const values = Object.values(data);
     const setClauses = keys.map((key, index) => `${key} = $${index + 1}`).join(', ');
 
+    // Add automatic timestamp update if timestampColumn is configured
+    const timestampClause = this.timestampColumn 
+      ? `, ${this.timestampColumn} = CURRENT_TIMESTAMP` 
+      : '';
+
     const query = `
       UPDATE ${this.tableName}
-      SET ${setClauses}, last_updated = CURRENT_TIMESTAMP
+      SET ${setClauses}${timestampClause}
       WHERE ${this.primaryKey} = $${keys.length + 1}
       RETURNING *
     `;

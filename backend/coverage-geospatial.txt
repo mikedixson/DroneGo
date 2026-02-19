@@ -1,0 +1,80 @@
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/miked/Downloads/DroneGo/backend[39m
+[2m      Coverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/services/geospatial-service.test.ts[2m > [22m[2mGeospatialService - SAFETY CRITICAL[22m[39m
+2026-02-19 19:43:01 [[32minfo[39m]: [32mDatabase connection pool initialized[39m
+{
+  "host": "localhost",
+  "database": "dronego",
+  "maxConnections": 20,
+  "level": "\u001b[32minfo\u001b[39m",
+  "message": "\u001b[32mDatabase connection pool initialized\u001b[39m",
+  "timestamp": "2026-02-19 19:43:01"
+}
+
+ [32mÔ£ô[39m tests/unit/services/geospatial-service.test.ts [2m ([22m[2m28 tests[22m[2m)[22m[90m 100[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m28 passed[39m[22m[90m (28)[39m
+[2m   Start at [22m 19:43:00
+[2m   Duration [22m 683ms[2m (transform 68ms, setup 0ms, collect 159ms, tests 100ms, environment 0ms, prepare 178ms)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |    6.27 |     31.7 |   17.64 |    6.27 |                   
+ backend           |       0 |        0 |       0 |       0 |                   
+  quick-update.mjs |       0 |        0 |       0 |       0 | 1-66              
+  ...l-imports.mjs |       0 |        0 |       0 |       0 | 1-31              
+  ...nt-import.mjs |       0 |        0 |       0 |       0 | 1-15              
+  test-db.mjs      |       0 |        0 |       0 |       0 | 1-28              
+  test-import.mjs  |       0 |        0 |       0 |       0 | 1-25              
+  ...-nt-import.ts |       0 |        0 |       0 |       0 | 1-20              
+ backend/src       |       0 |        0 |       0 |       0 |                   
+  server.ts        |       0 |        0 |       0 |       0 | 1-152             
+ backend/src/api   |       0 |        0 |       0 |       0 |                   
+  airspace.ts      |       0 |        0 |       0 |       0 | 1-304             
+  health.ts        |       0 |        0 |       0 |       0 | 1-84              
+  location.ts      |       0 |        0 |       0 |       0 | 1-245             
+  ...strictions.ts |       0 |        0 |       0 |       0 | 1-207             
+  toal.ts          |       0 |        0 |       0 |       0 | 1-345             
+  zones.ts         |       0 |        0 |       0 |       0 | 1-260             
+ backend/src/lib   |   38.04 |       20 |    12.5 |   38.04 |                   
+  config.ts        |   77.77 |        0 |       0 |   77.77 | 71-90             
+  db.ts            |   69.56 |      100 |   33.33 |   69.56 | 26,46-52,57-69    
+  errorHandler.ts  |       0 |        0 |       0 |       0 | 1-102             
+  logger.ts        |   81.55 |    33.33 |       0 |   81.55 | 80-81,87-103      
+  migrations.ts    |       0 |        0 |       0 |       0 | 1-167             
+ ...end/src/models |       0 |        0 |       0 |       0 |                   
+  ...sification.ts |       0 |        0 |       0 |       0 | 1-206             
+  BaseModel.ts     |       0 |        0 |       0 |       0 | 1-155             
+  DataSource.ts    |       0 |        0 |       0 |       0 | 1-174             
+  Location.ts      |       0 |        0 |       0 |       0 | 1-163             
+  ...estriction.ts |       0 |        0 |       0 |       0 | 1-422             
+  ...ictionZone.ts |       0 |        0 |       0 |       0 | 1-237             
+  TOALSite.ts      |       0 |        0 |       0 |       0 | 1-200             
+  ...estriction.ts |       0 |        0 |       0 |       0 | 1-301             
+  index.ts         |       0 |        0 |       0 |       0 | 1-18              
+ ...nd/src/scripts |       0 |        0 |       0 |       0 |                   
+  convert-kml.ts   |       0 |        0 |       0 |       0 | 1-41              
+  ...ic-england.ts |       0 |        0 |       0 |       0 | 1-381             
+  ...onal-trust.ts |       0 |        0 |       0 |       0 | 1-346             
+  ...-nats-data.ts |       0 |        0 |       0 |       0 | 1-310             
+  sync-data.ts     |       0 |        0 |       0 |       0 | 1-345             
+  test-hindhead.ts |       0 |        0 |       0 |       0 | 1-158             
+  ...d-geometry.ts |       0 |        0 |       0 |       0 | 1-129             
+ ...d/src/services |   15.86 |    66.66 |   57.14 |   15.86 |                   
+  ...ce-service.ts |       0 |        0 |       0 |       0 | 1-352             
+  ...ng-service.ts |       0 |        0 |       0 |       0 | 1-196             
+  ...al-service.ts |   95.86 |    81.48 |     100 |   95.86 | ...55-159,213-214 
+  ...on-service.ts |       0 |        0 |       0 |       0 | 1-248             
+  ...ty-service.ts |       0 |        0 |       0 |       0 | 1-137             
+  toal-service.ts  |       0 |        0 |       0 |       0 | 1-217             
+  zones-service.ts |       0 |        0 |       0 |       0 | 1-312             
+-------------------|---------|----------|---------|---------|-------------------
+ERROR: Coverage for lines (6.27%) does not meet global threshold (90%)
+ERROR: Coverage for functions (17.64%) does not meet global threshold (90%)
+ERROR: Coverage for statements (6.27%) does not meet global threshold (90%)
+ERROR: Coverage for branches (31.7%) does not meet global threshold (90%)

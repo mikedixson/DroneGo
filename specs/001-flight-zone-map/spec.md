@@ -167,7 +167,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **FR-014**: System MUST integrate with NATS (National Air Traffic Services) official airspace data from digital datasets (https://nats-uk.ead-it.com/cms-nats/opencms/en/Publications/digital-datasets/)
 - **FR-015**: System MUST display the data source authority and last update timestamp for all restriction zones
 - **FR-016**: System MUST update airspace restriction data (NATS, CAA) at least once daily to maintain accuracy
-- **FR-016A**: System MUST update heritage site and property restriction data at least once weekly (policies change less frequently than airspace)
+- **FR-016A**: System MUST update property restriction data (heritage sites: National Trust, English Heritage, Historic England) at least once weekly (policies change less frequently than airspace)
 - **FR-017**: System MUST include temporary flight restrictions (NOTAMs) with effective date/time ranges **[DEFERRED TO PHASE 8 - NOT IN MVP SCOPE]**
 - **FR-018**: System MUST display a confidence indicator showing whether data comes from primary authority sources
 - **FR-019**: System MUST display a prominent warning banner when cached data is older than 48 hours with "Verify independently before flight" disclaimer
@@ -205,7 +205,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 **Reliability & Scalability:**
 
-- **NFR-009**: API MUST enforce rate limiting of 300 requests per 15-minute window per IP address (20 requests/minute sustained)
+- **NFR-009**: API MUST enforce rate limiting of 300 requests per 15-minute window per IP address across all `/api/v1/*` endpoints combined (health/status endpoints excluded)
 - **NFR-010**: System MUST respond with HTTP 429 (Too Many Requests) when rate limit is exceeded
 - **NFR-011**: Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset) MUST be included in API responses
 - **NFR-012**: System SHOULD target 99% uptime during normal operating conditions (monitoring and HA infrastructure deferred to production operations outside MVP scope)

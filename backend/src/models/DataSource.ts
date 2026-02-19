@@ -26,6 +26,7 @@ export interface DataSourceAttributes extends BaseModelAttributes {
 export class DataSource extends BaseModel<DataSourceAttributes> {
   protected tableName = 'data_sources';
   protected primaryKey = 'source_id';
+  protected timestampColumn = 'last_sync_timestamp'; // Override default 'last_updated'
 
   /**
    * Find data source by authority name (unique)
