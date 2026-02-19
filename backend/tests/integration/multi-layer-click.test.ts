@@ -54,12 +54,24 @@ describe('Multi-Layer Click Integration', () => {
   });
 
   it('should return both zone and property restriction info when clicking on overlapping location', async () => {
-    // Test coordinates: near Tower Bridge / Tower of London
-    // This is a real-world scenario where both a heritage site and airspace restriction overlap
-    const testLat = 51.5081; // Tower of London latitude
-    const testLon = -0.0761; // Tower of London longitude
+    // Test coordinates: central location that we'll surround with both zone and property
+    const testLat = 51.5081;
+    const testLon = -0.0761;
 
-    // 1. Create a restriction zone covering this area (e.g., London CTR)
+    // 1. Create a restriction zone covering this area
+    const zoneGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.0861, 51.5031], // SW
+          [-0.0861, 51.5131], // NW  
+          [-0.0661, 51.5131], // NE
+          [-0.0661, 51.5031], // SE
+          [-0.0861, 51.5031], // Close
+        ],
+      ],
+    };
+
     const zoneResult = await pool.query(
       `INSERT INTO restriction_zones (
         zone_type, restriction_name, geometry, authority_source, data_source_id,
@@ -68,20 +80,33 @@ describe('Multi-Layer Click Integration', () => {
       ) VALUES (
         'controlled-airspace',
         'Test London Control Zone',
-        ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 500)::geometry),
+        ST_Multi(ST_GeomFromGeoJSON($1)),
         'Test CAA',
-        $3,
+        $2,
         0,
         2000,
         true,
         'primary-authority',
         'Controlled airspace around central London'
       ) RETURNING zone_id`,
-      [testLon, testLat, dataSourceIds['Test CAA']]
+      [JSON.stringify(zoneGeometry), dataSourceIds['Test CAA']]
     );
     zoneId = zoneResult.rows[0].zone_id;
 
-    // 2. Create a property restriction (heritage site) at the same location
+    // 2. Create a property restriction at the same location
+    const propertyGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-0.0811, 51.5056], // SW
+          [-0.0811, 51.5106], // NW
+          [-0.0711, 51.5106], // NE
+          [-0.0711, 51.5056], // SE
+          [-0.0811, 51.5056], // Close
+        ],
+      ],
+    };
+
     const propertyResult = await pool.query(
       `INSERT INTO property_restrictions (
         property_name, managing_organization, geometry, policy_text,
@@ -89,17 +114,17 @@ describe('Multi-Layer Click Integration', () => {
       ) VALUES (
         'Test Tower of London',
         'Historic Royal Palaces',
-        ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 200)::geometry),
+        ST_Multi(ST_GeomFromGeoJSON($1)),
         'Historic UNESCO World Heritage Site. Drone operations are prohibited within 200 meters without written authorization from Historic Royal Palaces. Contact heritage@hrp.org.uk for permissions.',
         'HERITAGE_SITE',
-        $3
+        $2
       ) RETURNING property_id`,
-      [testLon, testLat, dataSourceIds['Test Historic England']]
+      [JSON.stringify(propertyGeometry), dataSourceIds['Test Historic England']]
     );
     propertyId = propertyResult.rows[0].property_id;
 
     // 3. Check location - should return BOTH zone and property information
-    const result = await service.checkLocation(testLat, testLon);
+    const result = await service.checkLocation(testLat,testLon);
 
     // Assertions: verify all layer information is present
     expect(result).toBeDefined();
