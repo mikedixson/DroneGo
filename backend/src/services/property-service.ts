@@ -46,10 +46,11 @@ export class PropertyService {
    * 
    * @param bbox - Bounding box { west, south, east, north } in WGS84
    * @param category - Optional filter by restriction category (HERITAGE_SITE, SSSI, etc.)
+   * @param zoom - Optional map zoom level for level-of-detail geometry selection
    * @returns Array of property restrictions intersecting bbox (GeoJSON geometry included)
    */
-  async getPropertyRestrictionsByBbox(bbox: BoundingBox, category?: string): Promise<PropertyRestrictionAttributes[]> {
-    return await PropertyRestriction.findInBbox(bbox, category);
+  async getPropertyRestrictionsByBbox(bbox: BoundingBox, category?: string, zoom?: number): Promise<PropertyRestrictionAttributes[]> {
+    return await PropertyRestriction.findInBbox(bbox, category, zoom);
   }
 
   /**

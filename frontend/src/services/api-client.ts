@@ -186,7 +186,7 @@ class ApiClient {
   /**
    * GET /property-restrictions - Query property restrictions by bounding box (User Story 1)
    */
-  async getPropertyRestrictions(bounds: BoundsCoordinates, category?: string): Promise<PropertyRestrictionCollection> {
+  async getPropertyRestrictions(bounds: BoundsCoordinates, category?: string, zoom?: number): Promise<PropertyRestrictionCollection> {
     const bbox = `${bounds.minLon},${bounds.minLat},${bounds.maxLon},${bounds.maxLat}`;
     
     const params = new URLSearchParams({
@@ -195,6 +195,10 @@ class ApiClient {
 
     if (category) {
       params.append('category', category);
+    }
+
+    if (zoom !== undefined) {
+      params.append('zoom', zoom.toString());
     }
 
     return this.fetch<PropertyRestrictionCollection>(`/property-restrictions?${params.toString()}`);

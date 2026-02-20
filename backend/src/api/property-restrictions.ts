@@ -112,16 +112,17 @@ propertyRestrictionsRouter.get('/', async (req: Request, res: Response) => {
     // Query property restrictions in bounding box
     const bbox = { west, south, east, north };
     const category = req.query.category as string | undefined;
-    const properties = await propertyService.getPropertyRestrictionsByBbox(bbox, category);
+    const zoom = req.query.zoom ? parseInt(req.query.zoom as string, 10) : undefined;
+    const properties = await propertyService.getPropertyRestrictionsByBbox(bbox, category, zoom);
 
     // Format as GeoJSON FeatureCollection (per property-restrictions.yaml)
     const featureCollection = {
       type: 'FeatureCollection' as const,
       features: properties.map((property) => ({
         type: 'Feature' as const,
-        geometry: property.geometry, // Already in GeoJSON format from model
+        geometry: property.geometry, // Now uses geometry_simplified_low if available
         properties: {
-          property_id: property.property_id,
+          property_id: property.property_restriction_id,
           property_name: property.property_name,
           organization: property.managing_organization,
           restriction_category: property.restriction_category,
@@ -133,17 +134,18 @@ propertyRestrictionsRouter.get('/', async (req: Request, res: Response) => {
     };
 
     res.json(featureCollection);
-
     logger.info('Property restrictions query successful', {
       bbox,
       propertiesCount: properties.length,
     });
+    return;
   } catch (error) {
     logger.error('Property restrictions query failed', { error });
     res.status(500).json({
       error: 'Failed to query property restrictions',
       message: error instanceof Error ? error.message : String(error),
     });
+    return;
   }
 });
 
@@ -170,10 +172,11 @@ propertyRestrictionsRouter.get('/:id', async (req: Request, res: Response) => {
     const property = await propertyService.queryPropertyById(propertyId);
 
     if (!property) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Property restriction not found',
         property_id: propertyId,
       });
+      return;
     }
 
     // Return as GeoJSON Feature
@@ -181,7 +184,7 @@ propertyRestrictionsRouter.get('/:id', async (req: Request, res: Response) => {
       type: 'Feature' as const,
       geometry: property.geometry,
       properties: {
-        property_id: property.property_id,
+        property_id: property.property_restriction_id,
         property_name: property.property_name,
         organization: property.managing_organization,
         restriction_category: property.restriction_category,
@@ -192,16 +195,17 @@ propertyRestrictionsRouter.get('/:id', async (req: Request, res: Response) => {
     };
 
     res.json(feature);
-
     logger.info('Property restriction retrieved', {
       property_id: propertyId,
       property_name: property.property_name,
     });
+    return;
   } catch (error) {
     logger.error('Property restriction retrieval failed', { error });
     res.status(500).json({
       error: 'Failed to retrieve property restriction',
       message: error instanceof Error ? error.message : String(error),
     });
+    return;
   }
 });

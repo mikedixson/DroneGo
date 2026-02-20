@@ -1036,8 +1036,10 @@ export class DroneGoMap {
     const targetLayer = isSSSI ? this.sssiLayer : this.propertyRestrictionsLayer;
     const targetPane = isSSSI ? 'sssiPane' : 'propertyRestrictionsPane';
 
+    const zoom = this.map.getZoom();
+
     try {
-      const collection = await apiClient.getPropertyRestrictions(boundsCoords, category);
+      const collection = await apiClient.getPropertyRestrictions(boundsCoords, category, zoom);
 
       // Clear existing restrictions for this category
       targetLayer.clearLayers();
