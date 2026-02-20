@@ -170,12 +170,14 @@ zonesRouter.get('/', async (req: Request, res: Response) => {
       filters: options,
       resultCount: features.length,
     });
+    return;
   } catch (error) {
     logger.error('Zones query failed', { error });
     res.status(500).json({
       error: 'Failed to query restriction zones',
       message: error instanceof Error ? error.message : String(error),
     });
+    return;
   }
 });
 /**

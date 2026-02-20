@@ -26,6 +26,11 @@
 ### Session 2026-02-19
 
 - Q: What drone classification system should be used for filtering restrictions by drone type? → A: CAA/EU drone class designation (C0, C1, C2, C3, Legacy) with weight auto-populated but user can override weight
+- Q: When heritage site import scripts encounter API failures (network errors, rate limiting, malformed data), how should the system respond? → A: Log errors to structured logs, send alert notifications, continue with existing stale data, mark data source as unhealthy
+- Q: Heritage site APIs may return geometries with issues: invalid coordinates, self-intersecting polygons, or type mismatches (POLYGON when schema expects MULTIPOLYGON). How should the import process handle invalid geometry data? → A: Validate with ST_IsValid + coordinate bounds check, wrap POLYGONs in ST_Multi, quarantine failures with error details
+- Q: Heritage sites can have very complex boundaries (e.g., 1000+ coordinate points). Complex polygons slow map rendering. How should boundary complexity be managed? → A: Store original + generate simplified versions using ST_Simplify (tolerance: 0.0001° for zoom <13, 0.00005° for zoom 13-15, original for zoom >15)
+- Q: The spec says airspace restrictions should render on top of property restrictions, but when a user clicks a heritage site polygon to see its drone policy, should the clicked site temporarily highlight above all other layers? → A: Yes - temporarily elevate clicked heritage site to highest z-index with visual highlight, revert when detail panel closes
+- Q: Multiple data sources (National Trust, Historic England, Royal Parks) may list the same heritage site with slightly different boundaries or names (e.g., "Tower of London" vs "HM Tower of London"). How should the import process handle duplicates? → A: Detect near-duplicates (boundary centroid within 250m + 80% name similarity), prefer Historic England > National Trust > Others, merge policy text
 
 ---
 
@@ -122,6 +127,12 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 - **What happens when multiple TOAL sites exist in a small area?** Markers cluster when map zoom level < 12 (city-scale view) or when markers would render <50 pixels apart, showing a number badge indicating quantity. Zooming to level ≥13 reveals individual TOAL sites with distinct markers.
 
+- **What happens when heritage site import scripts fail due to API errors?** Import failures (network errors, rate limiting, API downtime, malformed data) are logged to structured application logs with full error context (data source, error type, timestamp). Alert notifications are sent to operations channels for monitoring. The system continues operating with existing (potentially stale) heritage site data rather than failing completely. The failed data source is marked as "unhealthy" in the data_sources table with last_error timestamp and error_message fields. Users see heritage sites from the last successful import with age indicators. Automated retry attempts occur on the next scheduled import cycle.
+
+- **How are invalid heritage site geometries handled during import?** Each imported geometry undergoes validation: (1) PostGIS ST_IsValid() check for topology errors (self-intersections, invalid rings); (2) Coordinate bounds validation ensuring latitude ∈ [-90, 90] and longitude ∈ [-180, 180] for global validity, with UK-focus warning if centroid outside [49°N-61°N, -8°W-2°E]; (3) Automatic POLYGON-to-MULTIPOLYGON conversion using ST_Multi() wrapper to match schema requirements. Geometries failing validation are quarantined in a heritage_sites_import_errors table with columns: source_record_id, data_source_id, error_type (topology_invalid, bounds_invalid, parse_failure), raw_geometry_text, error_details, quarantine_timestamp. Quarantined records generate alerts for manual review and potential data correction with the source authority.
+
+- **How are duplicate heritage sites from multiple sources handled?** The import deduplication process runs after each data source import: (1) Detect near-duplicates using spatial proximity (ST_Distance between boundary centroids ≤ 250 meters) AND name similarity (Levenshtein distance with 80% match threshold accounting for variations like "Tower of London" vs "HM Tower of London"); (2) When duplicates detected, prefer records by authority hierarchy: Historic England (statutory authority) > National Trust (major landowner) > Royal Parks > Other organizations; (3) Merge policy_text from all duplicate sources into preferred record with source attribution: "Historic England: [policy]. National Trust: [policy]"; (4) Mark non-preferred duplicates as superseded_by (foreign key to preferred record) rather than deleting to preserve audit trail; (5) Map display shows only preferred record; detail panel lists all contributing sources.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -161,6 +172,27 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **FR-034**: System MUST save drone profile settings to sessionStorage (persists during browser session, cleared on tab/window close)
 - **FR-035**: System MUST filter and highlight restrictions applicable to the configured drone class when a profile is active
 - **FR-036**: System MUST indicate on the map which restrictions apply to the user's specific drone configuration versus general restrictions
+
+**Heritage Site Import & Data Quality:**
+
+- **FR-037**: System MUST validate all heritage site geometries during import using PostGIS ST_IsValid() for topology correctness and coordinate bounds validation (lat ∈ [-90, 90], lng ∈ [-180, 180])
+- **FR-038**: System MUST automatically convert POLYGON geometries to MULTIPOLYGON using ST_Multi() wrapper to match database schema requirements during heritage site import
+- **FR-039**: System MUST quarantine invalid geometries that fail validation into heritage_sites_import_errors table with error details (error_type, raw_geometry_text, error_details, quarantine_timestamp) for manual review
+- **FR-040**: System MUST detect duplicate heritage sites across multiple data sources using spatial proximity (centroid distance ≤ 250m) AND name similarity (≥80% Levenshtein match) criteria
+- **FR-041**: System MUST resolve duplicate heritage sites by preferring authority hierarchy (Historic England > National Trust > Royal Parks > Others) and merging policy text from all sources with attribution
+- **FR-042**: System MUST mark superseded duplicate records with superseded_by foreign key reference rather than deleting to preserve audit trail
+- **FR-043**: System MUST generate and store simplified boundary geometries for heritage sites at three precision levels: high (original, zoom >15), medium (ST_Simplify tolerance 0.00005°, zoom 13-15), low (ST_Simplify tolerance 0.0001°, zoom <13) to optimize rendering performance
+- **FR-044**: System MUST serve appropriate simplified boundary geometry based on current map zoom level (<13: low detail, 13-15: medium detail, >15: high detail original)
+- **FR-045**: Heritage site import processes MUST log failures (network errors, API errors, rate limiting, malformed data) to structured application logs with full error context (data_source, error_type, error_message, timestamp)
+- **FR-046**: System MUST mark data sources as "unhealthy" in data_sources table when imports fail, recording last_error_timestamp and last_error_message for operational monitoring
+- **FR-047**: System MUST send alert notifications (email, Slack, PagerDuty) to operations team when heritage site imports fail, enabling prompt investigation
+- **FR-048**: System MUST continue operating with existing (stale) heritage site data when imports fail rather than removing heritage sites or blocking application functionality
+- **FR-049**: System MUST display data age indicators for heritage sites when operating with stale data due to import failures
+
+**Heritage Site Interaction:**
+
+- **FR-050**: When user clicks/taps a heritage site polygon, system MUST temporarily elevate that specific polygon to highest z-index (above all airspace and other property layers) with visual highlight styling (increased opacity, border emphasis)
+- **FR-051**: System MUST revert highlighted heritage site to normal z-index priority (beneath airspace layers per FR-007B) when detail panel is closed or different feature is selected
 
 **Data Quality & Updates:**
 
@@ -210,11 +242,23 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **NFR-011**: Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset) MUST be included in API responses
 - **NFR-012**: System SHOULD target 99% uptime during normal operating conditions (monitoring and HA infrastructure deferred to production operations outside MVP scope)
 
+**Observability & Operational Monitoring:**
+
+- **NFR-013**: Heritage site import processes MUST complete within 30 minutes per data source (National Trust ~1,692 properties, Historic England ~18,000 listed buildings with public access) to enable daily/weekly refresh schedules
+- **NFR-014**: System MUST maintain structured logs (JSON format) for all data import operations with minimum fields: timestamp, data_source, operation_type (start/success/failure), records_processed, records_failed, duration_ms, error_summary
+- **NFR-015**: Import failure alerts MUST be delivered within 5 minutes of failure detection to enable rapid operational response
+- **NFR-016**: System MUST track data source health metrics: last_success_timestamp, last_failure_timestamp, consecutive_failure_count, success_rate_7day to enable proactive maintenance
+
+**Data Quality & Performance:**
+
+- **NFR-017**: Boundary simplification for heritage sites MUST preserve topology (no self-intersections introduced) and ensure simplified boundaries remain within 10 meters of original boundaries for zoom level <13, within 5 meters for zoom 13-15
+- **NFR-018**: Heritage site polygon rendering performance MUST maintain ≥30fps when displaying up to 100 concurrent sites in viewport, using simplified geometries appropriate to zoom level
+
 ### Key Entities
 
 - **Restriction Zone**: Represents a geographic area with flying limitations based on aviation law. Includes zone type (no-fly, controlled airspace, military zone, temporary restriction), boundary coordinates (polygon), authority source, effective dates/times, altitude restrictions (floor and ceiling heights in feet AMSL), description of restrictions, and whether authorization can be requested. This entity covers legal airspace restrictions only.
 
-- **Property Restriction**: Represents landowner/property-based restrictions separate from airspace law. Includes property name, managing organization (National Trust, English Heritage, Historic England, etc.), boundary coordinates (polygon), property-specific drone policy text, contact information for permission requests, and policy effective date. These are advisory restrictions indicating property owner policies rather than legal aviation restrictions.
+- **Property Restriction**: Represents landowner/property-based restrictions separate from airspace law. Includes property name, managing organization (National Trust, English Heritage, Historic England, etc.), boundary coordinates stored as MULTIPOLYGON geometry (original high-precision boundaries), simplified boundary geometries at three zoom-level-optimized precision levels (high/medium/low generated using ST_Simplify with topology preservation), property-specific drone policy text, contact information for permission requests, policy effective date, superseded_by reference (foreign key to preferred record when duplicates detected), and deduplication metadata (is_primary boolean, duplicate_detection_timestamp). These are advisory restrictions indicating property owner policies rather than legal aviation restrictions. Related tables: heritage_sites_import_errors (quarantine table for geometries failing validation with columns: source_record_id, data_source_id, error_type, raw_geometry_text, error_details, quarantine_timestamp).
 
 - **TOAL Site**: Represents an officially designated or suitable Take Off and Landing location. Includes site name, coordinates (point), access rules (public/private/permit required), available facilities, surface type, operating hours if applicable, verification status (verified/community-reported/unverified), and confidence rating.
 
@@ -222,7 +266,7 @@ After the pilot has loaded the app and viewed map areas while online, those area
 
 - **Location**: Represents either the user's current position or a searched location. Includes coordinates (latitude/longitude), determined airspace restriction status using tri-state logic (flight_status: permitted = airspace clear, prohibited = airspace restricted, check-property-restrictions = airspace clear but property restrictions apply), property_restrictions array listing any property-based policies, nearest TOAL site reference with distance, and applicable airspace restrictions at that point.
 
-- **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., NATS for airspace data, CAA for regulatory guidance), data type provided, last update timestamp, update frequency, and reliability/confidence level.
+- **Data Source**: Represents the authority providing restriction data. Includes authority name (e.g., NATS for airspace data, CAA for regulatory guidance, National Trust/Historic England for heritage sites), data type provided, last_update_timestamp (last successful import), update frequency, reliability/confidence level, health_status (healthy/unhealthy based on import success), last_error_timestamp, last_error_message, consecutive_failure_count, and success_rate_7day for operational monitoring and alerting.
 
 - **Drone Profile**: Represents user's drone configuration for filtering applicable restrictions. Includes drone_class (C0, C1, C2, C3, Legacy as per CAA/EU classification), weight_grams (auto-populated from class but user-overridable), max_altitude_feet (user's operational or authorization ceiling), and optional drone_name. Stored in client-side session storage only; cleared when browser session ends.
 

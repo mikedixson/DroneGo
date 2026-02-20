@@ -122,18 +122,18 @@
 #### Services
 
 - [X] T032 [US1] Modify api-client in frontend/src/services/api-client.ts to handle tri-state LocationCheck response: parse flight_status enum, extract property_restrictions array, map to frontend types
-- [ ] T033 [P] [US1] Create property-api service in frontend/src/services/property-api.ts with fetchPropertyRestrictionsByBbox(bbox) calling GET /api/v1/property-restrictions, return GeoJSON FeatureCollection
+- [X] T033 [P] [US1] Create property-api service in frontend/src/services/property-api.ts with fetchPropertyRestrictionsByBbox(bbox) calling GET /api/v1/property-restrictions, return GeoJSON FeatureCollection
 
 #### Core UI Components (FR-001, FR-028)
 
-- [ ] T033A [P] [US1] Implement GPS centering in Map component frontend/src/components/Map.ts: On map initialization (FR-001), request geolocation permission, center map at user's GPS coordinates with accuracy circle indicator, handle permission denied with UK center fallback
-- [ ] T033B [P] [US1] Create LocationButton component in frontend/src/components/LocationButton.ts (FR-028): Add "Return to My Location" button, re-request geolocation permission if needed, animate map pan to current GPS coordinates, show loading spinner during location acquisition, handle errors with user-friendly message
+- [X] T033A [P] [US1] Implement GPS centering in Map component frontend/src/components/Map.ts: On map initialization (FR-001), request geolocation permission, center map at user's GPS coordinates with accuracy circle indicator, handle permission denied with UK center fallback
+- [X] T033B [P] [US1] Create LocationButton component in frontend/src/components/LocationButton.ts (FR-028): Add "Return to My Location" button, re-request geolocation permission if needed, animate map pan to current GPS coordinates, show loading spinner during location acquisition, handle errors with user-friendly message
 
 #### Components
 
 - [X] T034 [US1] Modify Map component in frontend/src/components/Map.ts to create custom Leaflet panes (propertyRestrictionsPane z-index:410, airspaceRestrictionsPane z-index:420), implement displayPropertyRestrictions(bbox) method to fetch and render heritage site polygons as semi-transparent amber with diagonal stripes on propertyRestrictionsPane, assign existing airspace layers to airspaceRestrictionsPane for rendering priority, add layer toggle event handlers
 - [X] T035 [P] [US1] Modify LayerControls component in frontend/src/components/LayerControls.ts to add "Heritage Sites" checkbox toggle for property restrictions layer visibility
-- [ ] T036 [P] [US1] Create PropertyAdvisoryPopup component in frontend/src/components/PropertyAdvisoryPopup.ts to display property_name, managing_organization, policy_summary (truncated to 200 chars), contact information, "Learn More" link
+- [X] T036 [P] [US1] Create PropertyAdvisoryPopup component in frontend/src/components/PropertyAdvisoryPopup.ts to display property_name, managing_organization, policy_summary (truncated to 200 chars), contact information, "Learn More" link
 - [X] T037 [US1] Modify RestrictionStatusIndicator component in frontend/src/components/RestrictionStatusIndicator.ts to handle tri-state flight_status: display red indicator + "No Flight Permitted" for 'prohibited', green + "Flight Permitted" for 'permitted', amber + "Check Property Policy" for 'check-property-restrictions' with property restrictions count
 
 #### Integration
@@ -142,10 +142,10 @@
 
 #### Retroactive Test Coverage (Constitution §III TDD Compliance)
 
-- [ ] T038A [P] [US1] Create test for conditional icon rendering in frontend/tests/unit/components/Map.test.ts: Test popup displays 🦋 icon for SSSI properties (restriction_category='SSSI_PROTECTED_AREAS') and 🏛️ icon for heritage properties (restriction_category='HERITAGE_SITES'), verify correct bgColor (#DC2626 for SSSI, #FFA500 for Heritage)
-- [ ] T038B [P] [US1] Create test for category separation in frontend/tests/unit/components/Map.test.ts: Test bottom section groups properties by category (heritageSites array vs sssiSites array), verify separate headings ("🏛️ HERITAGE SITES (n):" and "🦋 SSSI PROTECTED AREAS (n):"), verify amber vs red coloring
-- [ ] T038C [P] [US1] Create test for duplicate filtering in frontend/tests/unit/components/Map.test.ts: Test clicked property is excluded from bottom property list (filteredResult removes clicked property), verify no duplicate property display in popup
-- [ ] T038D [P] [US1] Create test for alignment consistency in frontend/tests/unit/components/Map.test.ts: Test all popup sections use text-align:left (header, status, property sections), verify proper spacing (margin-bottom: 12px, line-height: 1.4), verify no misaligned elements
+- [X] T038A [P] [US1] Create test for conditional icon rendering in frontend/tests/unit/components/Map.test.ts: Test popup displays 🦋 icon for SSSI properties (restriction_category='SSSI_PROTECTED_AREAS') and 🏛️ icon for heritage properties (restriction_category='HERITAGE_SITES'), verify correct bgColor (#DC2626 for SSSI, #FFA500 for Heritage)
+- [X] T038B [P] [US1] Create test for category separation in frontend/tests/unit/components/Map.test.ts: Test bottom section groups properties by category (heritageSites array vs sssiSites array), verify separate headings ("🏛️ HERITAGE SITES (n):" and "🦋 SSSI PROTECTED AREAS (n):"), verify amber vs red coloring
+- [X] T038C [P] [US1] Create test for duplicate filtering in frontend/tests/unit/components/Map.test.ts: Test clicked property is excluded from bottom property list (filteredResult removes clicked property), verify no duplicate property display in popup
+- [X] T038D [P] [US1] Create test for alignment consistency in frontend/tests/unit/components/Map.test.ts: Test all popup sections use text-align:left (header, status, property sections), verify proper spacing (margin-bottom: 12px, line-height: 1.4), verify no misaligned elements
 
 **Checkpoint after T038D**: Retroactive test coverage complete. All popup formatting changes now have test coverage per Constitution §III TDD mandate.
 

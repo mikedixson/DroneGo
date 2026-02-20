@@ -147,12 +147,14 @@ locationRouter.get('/check', async (req: Request, res: Response) => {
       propertyRestrictionsCount: result.property_restrictions.length,
       hasNearestToal: result.nearest_toal !== null,
     });
+    return;
   } catch (error) {
     logger.error('Location check failed', { error });
     res.status(500).json({
       error: 'Failed to check location restriction status',
       message: error instanceof Error ? error.message : String(error),
     });
+    return;
   }
 });
 /**
@@ -235,11 +237,13 @@ locationRouter.get('/search', async (req: Request, res: Response) => {
     });
 
     res.json(response);
+    return;
   } catch (error) {
     logger.error('Location search failed', { error });
     res.status(500).json({
       error: 'Failed to search for location',
       message: error instanceof Error ? error.message : String(error),
     });
+    return;
   }
 });

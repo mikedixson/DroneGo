@@ -149,11 +149,13 @@ toalRouter.get('/', async (req: Request, res: Response) => {
     });
 
     res.json(geoJSON);
+    return;
   } catch (error) {
     logger.error('Error querying TOAL sites', { error });
     res.status(500).json({
       error: 'Internal server error while querying TOAL sites'
     });
+    return;
   }
 });
 
@@ -280,11 +282,13 @@ toalRouter.get('/nearest', async (req: Request, res: Response) => {
     });
 
     res.json(response);
+    return;
   } catch (error) {
     logger.error('Error finding nearest TOAL', { error });
     res.status(500).json({
       error: 'Internal server error while finding nearest TOAL'
     });
+    return;
   }
 });
 
@@ -336,10 +340,12 @@ toalRouter.get('/:siteId', async (req: Request, res: Response) => {
     };
 
     res.json(geoJSON);
+    return;
   } catch (error) {
     logger.error('Error fetching TOAL site', { siteId: req.params.siteId, error });
     res.status(500).json({
       error: 'Internal server error while fetching TOAL site'
     });
+    return;
   }
 });

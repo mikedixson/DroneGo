@@ -53,19 +53,11 @@ interface EndpointConfig {
 
 const NATIONAL_TRUST_ENDPOINTS: EndpointConfig[] = [
   {
-    url: 'https://services.arcgis.com/nGt4QxSblgDfeJn9/arcgis/rest/services/National_Trust_Always_Open/FeatureServer/0',
+    url: 'https://services-eu1.arcgis.com/NPIbx47lsIiu2pqz/ArcGIS/rest/services/National_Trust_Open_Data_Land_Always_Open/FeatureServer/0',
     name: 'Always Open Properties',
     accessType: 'Always Open',
     policyText:
       'National Trust property with open public access. Drone flights are permitted with responsible flying practices. Please maintain a safe distance from buildings, visitors, and wildlife. Follow the National Trust Drone Policy: fly below 120m, avoid disturbance, respect privacy, and comply with CAA regulations.',
-    contactEmail: 'enquiries@nationaltrust.org.uk',
-  },
-  {
-    url: 'https://services.arcgis.com/nGt4QxSblgDfeJn9/arcgis/rest/services/National_Trust_Limited_Access/FeatureServer/0',
-    name: 'Limited Access Properties',
-    accessType: 'Limited Access',
-    policyText:
-      'National Trust property with limited or restricted access. Drone flights require prior written authorization from the property management team. Unauthorized drone use may constitute trespass and is prohibited under National Trust bylaws. Contact the property directly for permission.',
     contactEmail: 'enquiries@nationaltrust.org.uk',
   },
 ];
@@ -97,13 +89,9 @@ async function queryEndpointPage(
       params: {
         where: '1=1', // Query all records
         outFields: '*', // All fields
-        geometryType: 'esriGeometryPolygon',
-        spatialRel: 'esriSpatialRelIntersects',
-        outSR: 4326, // Request WGS84 (EPSG:4326) directly
-        f: 'json',
+        f: 'geojson', // Request GeoJSON format directly
         resultOffset: offset,
         resultRecordCount: pageSize,
-        returnGeometry: true,
       },
       timeout: 60000, // 60 second timeout
     });
@@ -153,40 +141,39 @@ async function importEndpoint(
       // Process each feature
       for (const feature of result.features) {
         try {
-          // Extract attributes
-          const attributes = feature.attributes || {};
+          // Extract properties (GeoJSON format uses .properties, not .attributes)
+          const props = feature.properties || {};
           const propertyName =
-            attributes.NAME ||
-            attributes.PROPERTY_NAME ||
-            attributes.SITE_NAME ||
+            props.name ||
+            props.OSOPENNAME ||
+            props.NAME ||
+            props.PROPERTY_NAME ||
+            props.SITE_NAME ||
             'Unnamed National Trust Property';
 
-          // Extract geometry (should already be in EPSG:4326)
+          // Extract geometry (GeoJSON format - already in correct structure)
           const geometry = feature.geometry;
 
-          if (!geometry || !geometry.rings) {
+          if (!geometry || !geometry.coordinates) {
             logger.warn(`Skipping feature without valid geometry: ${propertyName}`);
             stats.recordsSkipped++;
             continue;
           }
 
-          // Convert ArcGIS rings format to GeoJSON Polygon
+          // Geometry is already in GeoJSON format (Polygon or MultiPolygon)
           let geoJsonGeometry: any;
-          if (geometry.rings) {
-            geoJsonGeometry = {
-              type: 'Polygon',
-              coordinates: geometry.rings,
-            };
+          if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+            geoJsonGeometry = geometry;
           } else {
-            logger.warn(`Unsupported geometry type for ${propertyName}`);
+            logger.warn(`Unsupported geometry type ${geometry.type} for ${propertyName}`);
             stats.recordsSkipped++;
             continue;
           }
 
           // Extract property-specific contact information if available
           const contactInfo =
-            attributes.CONTACT_EMAIL ||
-            attributes.PHONE ||
+            props.CONTACT_EMAIL ||
+            props.PHONE ||
             endpoint.contactEmail;
 
           // Insert property restriction
@@ -209,7 +196,7 @@ async function importEndpoint(
         } catch (error) {
           logger.error(`Failed to insert feature from ${endpoint.name}`, {
             error,
-            propertyName: feature.attributes?.NAME || 'Unknown',
+            propertyName: feature.properties?.name || feature.properties?.OSOPENNAME || 'Unknown',
           });
           stats.errors++;
         }

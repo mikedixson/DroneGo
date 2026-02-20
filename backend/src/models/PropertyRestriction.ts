@@ -5,15 +5,19 @@ import type { FeatureCollection, MultiPolygon, Polygon } from 'geojson';
  * Property Restriction entity attributes
  */
 export interface PropertyRestrictionAttributes extends BaseModelAttributes {
-  property_id: string;
+  property_restriction_id: string; // FIX: Renamed from property_id per Migration 007
   property_name: string;
   managing_organization: string;
   restriction_category: string;
-  geometry: MultiPolygon | Polygon; // GeoJSON geometry
+  geometry: MultiPolygon | Polygon; // GeoJSON geometry - full precision
+  geometry_simplified_low: MultiPolygon | null; // Simplified for zoom <13 (tolerance 0.0001°)
+  geometry_simplified_medium: MultiPolygon | null; // Simplified for zoom 13-15 (tolerance 0.00005°)
   policy_text: string | null;
   contact_info: string | null;
   policy_effective_date: Date | null;
   data_source_id: string | null;
+  superseded_by: string | null; // UUID FK to property_restriction_id (for deduplication)
+  is_primary: boolean; // Default true, false if superseded
   created_at: Date;
   last_updated: Date;
 }
@@ -44,7 +48,7 @@ export interface BoundingBox {
  */
 export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes> {
   protected tableName = 'property_restrictions';
-  protected primaryKey = 'property_id';
+  protected primaryKey = 'property_restriction_id'; // FIX: Renamed from property_id per Migration 007
 
   /**
    * Create a new property restriction
@@ -93,10 +97,10 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
         property_name, managing_organization, geometry, policy_text,
         contact_info, policy_effective_date, data_source_id
       ) VALUES (
-        $1, $2, ST_Multi(ST_GeomFromGeoJSON($3)), $4, $5, $6, $7
+        $1, $2, ST_Multi(ST_MakeValid(ST_GeomFromGeoJSON($3))), $4, $5, $6, $7
       )
       RETURNING 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
         ST_AsGeoJSON(geometry)::json as geometry,
@@ -139,10 +143,10 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
 
     const query = `
       SELECT 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
-        ST_AsGeoJSON(geometry)::json as geometry,
+        ST_AsGeoJSON(COALESCE(geometry_simplified_low, geometry))::json as geometry,
         policy_text,
         contact_info,
         policy_effective_date,
@@ -150,7 +154,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
         created_at,
         last_updated
       FROM property_restrictions
-      WHERE ST_Intersects(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))
+      WHERE ST_Intersects(COALESCE(geometry_simplified_low, geometry), ST_SetSRID(ST_MakePoint($1, $2), 4326))
       ORDER BY property_name
     `;
 
@@ -162,21 +166,32 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
    * Find property restrictions within bounding box
    * 
    * Used for map viewport queries to display all properties in view.
+   * Uses zoom-based Level of Detail (LOD) for geometry:
+   * - Zoom < 11: Simplified geometry (geometry_simplified_low)
+   * - Zoom >= 11: Full precision geometry
    * 
    * @param bbox - Bounding box (west, south, east, north)
    * @param category - Optional restriction category filter (HERITAGE_SITE, SSSI, etc.)
+   * @param zoom - Optional map zoom level (default: use full precision)
    * @returns Array of property restrictions intersecting bbox
    */
-  static async findInBbox(bbox: BoundingBox, category?: string): Promise<PropertyRestrictionAttributes[]> {
+  static async findInBbox(bbox: BoundingBox, category?: string, zoom?: number): Promise<PropertyRestrictionAttributes[]> {
     const pool = (await import('../lib/db.js')).getDbPool();
+
+    // Use simplified geometry only for wide zoom levels (< 11)
+    // Otherwise use full precision for better accuracy
+    const useSimplified = zoom !== undefined && zoom < 11;
+    const geometryField = useSimplified 
+      ? 'COALESCE(geometry_simplified_low, geometry)'
+      : 'geometry';
 
     const query = `
       SELECT 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
         restriction_category,
-        ST_AsGeoJSON(geometry)::json as geometry,
+        ST_AsGeoJSON(${geometryField})::json as geometry,
         policy_text,
         contact_info,
         policy_effective_date,
@@ -185,14 +200,14 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
         last_updated
       FROM property_restrictions
       WHERE ST_Intersects(
-        geometry,
+        ${geometryField},
         ST_MakeEnvelope($1, $2, $3, $4, 4326)
       )
       ${category ? 'AND restriction_category = $5' : ''}
       ORDER BY property_name
     `;
 
-    const params = [bbox.west, bbox.south, bbox.east, bbox.north];
+    const params: (number | string)[] = [bbox.west, bbox.south, bbox.east, bbox.north];
     if (category) {
       params.push(category);
     }
@@ -214,7 +229,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
 
     const query = `
       SELECT 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
         ST_AsGeoJSON(geometry)::json as geometry,
@@ -244,7 +259,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
 
     const query = `
       SELECT 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
         ST_AsGeoJSON(geometry)::json as geometry,
@@ -255,7 +270,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
         created_at,
         last_updated
       FROM property_restrictions
-      WHERE property_id = $1
+      WHERE property_restriction_id = $1
     `;
 
     const result = await pool.query(query, [propertyId]);
@@ -332,9 +347,9 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
     const query = `
       UPDATE property_restrictions
       SET ${setClauses.join(', ')}
-      WHERE property_id = $${valueIndex}
+      WHERE property_restriction_id = $${valueIndex}
       RETURNING 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
         ST_AsGeoJSON(geometry)::json as geometry,
@@ -358,7 +373,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
   static async delete(propertyId: string): Promise<void> {
     const pool = (await import('../lib/db.js')).getDbPool();
 
-    const query = `DELETE FROM property_restrictions WHERE property_id = $1`;
+    const query = `DELETE FROM property_restrictions WHERE property_restriction_id = $1`;
     await pool.query(query, [propertyId]);
   }
 
@@ -377,7 +392,7 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
       type: 'Feature' as const,
       geometry: prop.geometry,
       properties: {
-        property_id: prop.property_id,
+        property_restriction_id: prop.property_restriction_id,
         property_name: prop.property_name,
         managing_organization: prop.managing_organization,
         policy_text: prop.policy_text,
@@ -402,10 +417,10 @@ export class PropertyRestriction extends BaseModel<PropertyRestrictionAttributes
 
     const query = `
       SELECT 
-        property_id,
+        property_restriction_id,
         property_name,
         managing_organization,
-        ST_AsGeoJSON(geometry)::json as geometry,
+        ST_AsGeoJSON(COALESCE(geometry_simplified_low, geometry))::json as geometry,
         policy_text,
         contact_info,
         policy_effective_date,
