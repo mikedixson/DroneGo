@@ -32,6 +32,8 @@
 - Q: The spec says airspace restrictions should render on top of property restrictions, but when a user clicks a heritage site polygon to see its drone policy, should the clicked site temporarily highlight above all other layers? → A: Yes - temporarily elevate clicked heritage site to highest z-index with visual highlight, revert when detail panel closes
 - Q: Multiple data sources (National Trust, Historic England, Royal Parks) may list the same heritage site with slightly different boundaries or names (e.g., "Tower of London" vs "HM Tower of London"). How should the import process handle duplicates? → A: Detect near-duplicates (boundary centroid within 250m + 80% name similarity), prefer Historic England > National Trust > Others, merge policy text
 
+- Q: Should drone settings filtering hide non-applicable restrictions or show all with highlighting? → A: Show all restrictions but visually highlight/emphasize those applicable to user's drone
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -170,8 +172,8 @@ After the pilot has loaded the app and viewed map areas while online, those area
 - **FR-032**: System MUST auto-populate drone weight based on selected class (C0:<250g, C1:<900g, C2:<4kg, C3:<25kg) but allow manual override
 - **FR-033**: Users MUST be able to set their maximum operational altitude in feet for their specific drone and authorization level
 - **FR-034**: System MUST save drone profile settings to sessionStorage (persists during browser session, cleared on tab/window close)
-- **FR-035**: System MUST filter and highlight restrictions applicable to the configured drone class when a profile is active
-- **FR-036**: System MUST indicate on the map which restrictions apply to the user's specific drone configuration versus general restrictions
+- **FR-035**: System MUST display all restrictions on the map regardless of drone profile configuration to maintain full situational awareness
+- **FR-036**: System MUST visually emphasize restrictions applicable to the user's configured drone (e.g., bold outline, badge indicator, or distinct highlight) while keeping non-applicable restrictions visible but de-emphasized
 
 **Heritage Site Import & Data Quality:**
 
